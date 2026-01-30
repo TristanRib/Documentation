@@ -1,5 +1,3 @@
-200 Years of Global Major Earthquakes
-
 Busin Thomas Riboulet-Depret Tristan Van-Duysen Nicolas
 
 # Datacard
@@ -38,40 +36,26 @@ Notes
 
 <https://www.kaggle.com/datasets/dhrubangtalukdar/200-years-of-global-major-earthquakes-18262026/code>
 
-# Dataset Analyse
-
 ## Dictionnaire des données
 
-| **Nom** | **Type** | **Unité** | **Intervalle** | **Description** |
-| --- | --- | --- | --- | --- |
-| time | date |     | 24 septembre 1827 04h00 => 07 janvier 2026 22h00 | Date et heure du séisme. |
-| latitude | float | degrés | \-77.080 => 87.386 | Latitude du séisme. |
-| longitude | float | degrés | \-179.997 => 180.000 | Longitude du séisme. |
-| depth | float | kilomètres | \-4 => 700 | Profondeur en kilomètre du tremblement. |
-| mag | float | magnitude | 5 => 9.5 | Magnitude du séisme. |
-| magType | object |     |     | Échelle de magnitude utilisée. |
-| nst | float | unités | 0 => 934 | Nombre de stations sismiques utilisées. |
-| gap | float | degrés | 6.5 => 360 | Écart azimutal indiquant la couverture de la station. |
-| dmin | float | degrés | 0 => 41.046 | Distance minimale de la station sismique la plus proche. |
-| rms | float | unités | \-1 => 69.320 | Racine carré moyenne des résidus de temps de trajet. |
-| id  | object |     |     | Identifiant unique. |
-| updated | object |     |     | Date et heure de la mise à jour de la donnée. |
-| place | object |     |     | Localisation (ville) |
-| type | object |     |     | Cause du séisme (tremblement de terre, explosion nucléaire, éruption volcanique…) |
-| horizontalError | float | kilomètres | 0 => 778 | La distance d'incertitude |
-| depthError | float | kilomètres | \-1 => 1091.9 | La profondeur d'incertitude |
-| magError | float | magnitude | 0 => 1.84 | La magnitude d'incertitude |
-| magNst | float | unités | 0 => 1027 | Le nombre de stations sismiques qui ont évalué la magnitude |
-| status | object |     |     | Savoir si l'information a été vérifiée ou saisie automatiquement. |
-
-## Statistiques descriptives
-
-![Statitstiques Time-Depth](./ressources/Capture%20d'écran%202026-01-30%20094815.png).
-![Statitstiques Mag-Gap](./ressources/Capture%20d'écran%202026-01-30%20094835.png).
-![Statitstiques Dmin-Updated](./ressources/Capture%20d'écran%202026-01-30%20094942.png).
-![Statitstiques Place-DepthError](./ressources/Capture%20d'écran%202026-01-30%20095029.png).
-![Statitstiques MagError-Status](./ressources/Capture%20d'écran%202026-01-30%20095036.png).
-
-## Corrélation
-
-![Corrélation par régression linéaire](./ressources/Capture%20d'écran%202026-01-30%20095345.png).
+| **Nom**         | **Type** | **Unité**  | **Intervalle**                                   | **Description**                                                                   | **Valeurs manquantes** | **Doublons** | **Moyenne** | **Min** | **Max** |
+|-----------------|----------|------------|--------------------------------------------------|-----------------------------------------------------------------------------------|------------------------|--------------|-------------|---------|---------|
+| time            | date     |            | 24 septembre 1827 04h00 => 07 janvier 2026 22h00 | Date et heure du séisme.                                                          | 0                      |              |             |         |         |
+| latitude        | float    | degrés     | \-77.080 => 87.386                               | Latitude du séisme.                                                               | 0                      | 0            | 3.79        | -77.1   | 87.4    |
+| longitude       | float    | degrés     | \-179.997 => 180.000                             | Longitude du séisme.                                                              | 0                      | 0            | 40.3        | -180    | 180     |
+| depth           | float    | kilomètres | \-4 => 700                                       | Profondeur en kilomètre du tremblement.                                           | 539                    | 0            | 61.6        | -4      | 700     |
+| mag             | float    | magnitude  | 5 => 9.5                                         | Magnitude du séisme.                                                              | 0                      | 0            | 5.45        | 5       | 9.5     |
+| magType         | object   |            |                                                  | Échelle de magnitude utilisée.                                                    | 0                      |              |             |         |         |
+| nst             | float    | unités     | 0 => 934                                         | Nombre de stations sismiques utilisées.                                           | 74700                  | 0            | 158         | 0       | 360     |
+| gap             | float    | degrés     | 6.5 => 360                                       | Écart azimutal indiquant la couverture de la station.                             | 64100                  | 0            | 63.1        | 6.5     | 360     |
+| dmin            | float    | degrés     | 0 => 41.046                                      | Distance minimale de la station sismique la plus proche.                          | 84700                  | 0            | 4.24        | 0       | 41      |
+| rms             | float    | unités     | \-1 => 69.320                                    | Racine carré moyenne des résidus de temps de trajet.                              | 31500                  | 0            | 0.96        | -1      | 69.3    |
+| id              | object   |            |                                                  | Identifiant unique.                                                               | 0                      | 0            |             |         |         |
+| updated         | object   |            |                                                  | Date et heure de la mise à jour de la donnée.                                     | 0                      |              |             |         |         |
+| place           | object   |            |                                                  | Localisation (ville)                                                              | 222                    |              |             |         |         |
+| type            | object   |            |                                                  | Cause du séisme (tremblement de terre, explosion nucléaire, éruption volcanique…) | 0                      |              |             |         |         |
+| horizontalError | float    | kilomètres | 0 => 778                                         | La distance d'incertitude                                                         | 86100                  | 0            | 7.83        | 0       | 778     |
+| depthError      | float    | kilomètres | \-1 => 1091.9                                    | La profondeur d'incertitude                                                       | 51600                  | 0            | 7.98        | -1      | 1090    |
+| magError        | float    | magnitude  | 0 => 1.84                                        | La magnitude d'incertitude                                                        | 69500                  | 0            | 0.17        | 0       | 1.84    |
+| magNst          | float    | unités     | 0 => 1027                                        | Le nombre de stations sismiques qui ont évalué la magnitude                       | 63700                  | 0            | 54.9        | 0       | 1030    |
+| status          | object   |            |                                                  | Savoir si l'information a été vérifiée ou saisie automatiquement.                 | 0                      |              |             |         |         |
