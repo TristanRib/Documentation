@@ -14,7 +14,7 @@
 ## 3 - Données
 
 - Les colonnes numériques ont toutes étés normalisées grâce au StandardScaler de la librairie scikit-learn.
-  ![la liste des colonnes numériques](documentation/ressources/colonnes_numeriques.png)
+  ![la liste des colonnes numériques](ressources/colonnes_numeriques.png)
 - Toutes les données nulles se sont vues assigner des valeurs.
 - La catégorie "magType" a été encodée pour être interprétable par le modèle.
 
@@ -27,7 +27,7 @@
 ## 5 - Métriques
 
 - Les métriques observées sont la Mean Absolute Error, Mean Squared Error et la R² (coefficient de détermination)
-  ![MAE, RMSE, R²](documentation/ressources/metriques_mag.png)
+  ![MAE, RMSE, R²](ressources/metriques_mag.png)
 
 # Model Card Depth - XGBRegressor
 
@@ -45,7 +45,7 @@
 ## 3 - Données
 
 - Les colonnes numériques ont toutes étés normalisées grâce au StandardScaler de la librairie scikit-learn.
-  ![la liste des colonnes numériques](documentation/ressources/colonnes_numeriques.png)
+  ![la liste des colonnes numériques](ressources/colonnes_numeriques.png)
 - Toutes les données nulles se sont vues assigner des valeurs.
 - La catégorie "magType" a été encodée pour être interprétable par le modèle.
 
@@ -58,5 +58,5 @@
 ## 5 - Métriques
 
 - Les métriques observées sont la Mean Absolute Error, Mean Squared Error et la R² (coefficient de détermination)
-  ![MAE, RMSE, R²](documentation/ressources/metriques_depth.png)
+  ![MAE, RMSE, R²](ressources/metriques_depth.png)
 
