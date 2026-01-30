@@ -1,0 +1,387 @@
+name: 200-years-of-global-major-earthquakes
+version: '1.0'
+created: '2026-01-30 14:27:03'
+domain: seismology
+period: 1826-2026
+data:
+  instance_count: 106077
+  feature_count: 19
+  feature_list:
+    time:
+      description: Date et heure du séisme
+      type: object
+      value_count: 106077
+      unique_count: 106076
+      duplicate_count: 1
+      duplicate_ratio: 0.0
+      missing_count: 0
+      missing_ratio: 0.0
+      sample:
+      - '2026-01-07 22:00:13.258000+00:00'
+      - '2026-01-07 04:12:56.792000+00:00'
+      - '2026-01-07 03:02:56.040000+00:00'
+      - '2026-01-06 23:10:38.371000+00:00'
+      - '2026-01-06 19:17:09.696000+00:00'
+    latitude:
+      description: Latitude du séisme
+      type: float64
+      value_count: 106077
+      unique_count: 75424
+      duplicate_count: 30653
+      duplicate_ratio: 0.29
+      missing_count: 0
+      missing_ratio: 0.0
+      count: 106077.0
+      mean: 3.794864842991502
+      std: 30.32892052703621
+      min: -77.08
+      25%: -17.741
+      50%: -0.569
+      75%: 30.16
+      max: 87.386
+      sample:
+      - -23.4332
+      - 7.2863
+      - 7.3902
+      - -17.6276
+      - 37.2523
+    longitude:
+      description: Longitude du séisme
+      type: float64
+      value_count: 106077
+      unique_count: 83382
+      duplicate_count: 22695
+      duplicate_ratio: 0.21
+      missing_count: 0
+      missing_ratio: 0.0
+      count: 106077.0
+      mean: 40.265552045971106
+      std: 121.99138174789002
+      min: -179.997
+      25%: -72.395
+      50%: 99.069
+      75%: 142.82
+      max: 180.0
+      sample:
+      - -179.8984
+      - 127.0595
+      - 126.7221
+      - 168.2465
+      - 74.6137
+    depth:
+      description: Profondeur en kilomètre du tremblement
+      type: float64
+      value_count: 105484
+      unique_count: 11665
+      duplicate_count: 94412
+      duplicate_ratio: 0.89
+      missing_count: 593
+      missing_ratio: 0.01
+      count: 105484.0
+      mean: 61.576359717137734
+      std: 107.75108389669967
+      min: -4.0
+      25%: 12.0
+      50%: 33.0
+      75%: 50.3
+      max: 700.0
+      sample:
+      - 547.033
+      - 11.854
+      - 35.0
+      - 62.384
+      - 10.0
+    mag:
+      description: Magnitude du séisme
+      type: float64
+      value_count: 106077
+      unique_count: 314
+      duplicate_count: 105763
+      duplicate_ratio: 1.0
+      missing_count: 0
+      missing_ratio: 0.0
+      count: 106077.0
+      mean: 5.452840838890554
+      std: 0.48526990643796203
+      min: 5.0
+      25%: 5.1
+      50%: 5.3
+      75%: 5.7
+      max: 9.5
+      sample:
+      - 5.5
+      - 6.4
+      - 5.0
+      - 5.2
+      - 5.4
+    magType:
+      description: Échelle de magnitude utilisée
+      type: object
+      value_count: 106077
+      unique_count: 28
+      duplicate_count: 106049
+      duplicate_ratio: 1.0
+      missing_count: 0
+      missing_ratio: 0.0
+      sample:
+      - mww
+      - mb
+      - mwr
+      - ml
+      - mwb
+    nst:
+      description: Nombre de stations sismiques utilisées
+      type: float64
+      value_count: 31347
+      unique_count: 737
+      duplicate_count: 105340
+      duplicate_ratio: 0.99
+      missing_count: 74730
+      missing_ratio: 0.7
+      count: 31347.0
+      mean: 157.56850735317573
+      std: 126.39729050588703
+      min: 0.0
+      25%: 68.0
+      50%: 118.0
+      75%: 210.0
+      max: 934.0
+      sample:
+      - 63.0
+      - 58.0
+      - 118.0
+      - 47.0
+      - 112.0
+    gap:
+      description: Écart azimutal indiquant la couverture de la station
+      type: float64
+      value_count: 41986
+      unique_count: 1860
+      duplicate_count: 104217
+      duplicate_ratio: 0.98
+      missing_count: 64091
+      missing_ratio: 0.6
+      count: 41986.0
+      mean: 63.119420327754575
+      std: 38.59079613466261
+      min: 6.5
+      25%: 36.0
+      50%: 54.7
+      75%: 80.675
+      max: 360.0
+      sample:
+      - 39.0
+      - 53.0
+      - 30.0
+      - 79.0
+      - 54.0
+    dmin:
+      description: Distance minimale de la station sismique la plus proche
+      type: float64
+      value_count: 21402
+      unique_count: 8993
+      duplicate_count: 97084
+      duplicate_ratio: 0.92
+      missing_count: 84675
+      missing_ratio: 0.8
+      count: 21402.0
+      mean: 4.2368525003793485
+      std: 5.211969617109332
+      min: 0.0
+      25%: 1.271
+      50%: 2.533
+      75%: 5.00875
+      max: 41.046
+      sample:
+      - 5.976
+      - 1.485
+      - 1.178
+      - 2.388
+      - 1.991
+    rms:
+      description: Racine carré moyenne des résidus de temps de trajet
+      type: float64
+      value_count: 74560
+      unique_count: 271
+      duplicate_count: 105806
+      duplicate_ratio: 1.0
+      missing_count: 31517
+      missing_ratio: 0.3
+      count: 74560.0
+      mean: 0.9600754339931526
+      std: 0.37213001134574003
+      min: -1.0
+      25%: 0.81
+      50%: 0.97
+      75%: 1.1
+      max: 69.32
+      sample:
+      - 1.13
+      - 1.4
+      - 1.17
+      - 0.54
+      - 0.88
+    id:
+      description: Identifiant unique
+      type: object
+      value_count: 106077
+      unique_count: 106077
+      duplicate_count: 0
+      duplicate_ratio: 0.0
+      missing_count: 0
+      missing_ratio: 0.0
+      sample:
+      - us7000rnbi
+      - us7000rn4a
+      - us7000rn2z
+      - us7000rn1j
+      - us7000rmzt
+    updated:
+      description: Date et heure de la mise à jour de la donnée
+      type: object
+      value_count: 106077
+      unique_count: 101803
+      duplicate_count: 4274
+      duplicate_ratio: 0.04
+      missing_count: 0
+      missing_ratio: 0.0
+      sample:
+      - '2026-01-07T22:24:28.537Z'
+      - '2026-01-07T16:31:18.040Z'
+      - '2026-01-07T15:50:12.915Z'
+      - '2026-01-07T12:59:00.885Z'
+      - '2026-01-07T05:04:55.711Z'
+    place:
+      description: Localisation (ville)
+      type: object
+      value_count: 105855
+      unique_count: 64262
+      duplicate_count: 41815
+      duplicate_ratio: 0.39
+      missing_count: 222
+      missing_ratio: 0.0
+      sample:
+      - south of the Fiji Islands
+      - 53 km E of Santiago, Philippines
+      - 16 km ESE of Baculin, Philippines
+      - 13 km NNW of Port-Vila, Vanuatu
+      - 103 km N of Barishal, Pakistan
+    type:
+      description: Cause du séisme
+      type: object
+      value_count: 106077
+      unique_count: 7
+      duplicate_count: 106070
+      duplicate_ratio: 1.0
+      missing_count: 0
+      missing_ratio: 0.0
+      sample:
+      - earthquake
+      - landslide
+      - volcanic eruption
+      - nuclear explosion
+      - mine collapse
+    horizontalError:
+      description: La distance d'incertitude
+      type: float64
+      value_count: 19983
+      unique_count: 1355
+      duplicate_count: 104722
+      duplicate_ratio: 0.99
+      missing_count: 86094
+      missing_ratio: 0.81
+      count: 19983.0
+      mean: 7.834729106361849
+      std: 8.643363715766137
+      min: 0.0
+      25%: 6.03
+      50%: 7.5
+      75%: 9.2
+      max: 778.0
+      sample:
+      - 8.66
+      - 5.21
+      - 7.94
+      - 9.64
+      - 6.54
+    depthError:
+      description: La profondeur d'incertitude
+      type: float64
+      value_count: 54440
+      unique_count: 3107
+      duplicate_count: 102970
+      duplicate_ratio: 0.97
+      missing_count: 51637
+      missing_ratio: 0.49
+      count: 54440.0
+      mean: 7.982370113248731
+      std: 10.727341125899137
+      min: -1.0
+      25%: 1.9775
+      50%: 4.9
+      75%: 9.6
+      max: 1091.9
+      sample:
+      - 7.704
+      - 4.721
+      - 1.842
+      - 6.266
+      - 1.848
+    magError:
+      description: La magnitude  d'incertitude
+      type: float64
+      value_count: 36554
+      unique_count: 339
+      duplicate_count: 105738
+      duplicate_ratio: 1.0
+      missing_count: 69523
+      missing_ratio: 0.66
+      count: 36554.0
+      mean: 0.17152278280441455
+      std: 0.15210419169130612
+      min: 0.0
+      25%: 0.06
+      50%: 0.1
+      75%: 0.21
+      max: 1.84
+      sample:
+      - 0.093
+      - 0.098
+      - 0.047
+      - 0.103
+      - 0.049
+    magNst:
+      description: Le nombre de stations sismiques qui ont évalué la magnitude
+      type: float64
+      value_count: 42353
+      unique_count: 665
+      duplicate_count: 105412
+      duplicate_ratio: 0.99
+      missing_count: 63724
+      missing_ratio: 0.6
+      count: 42353.0
+      mean: 54.878497390975845
+      std: 82.99348531500023
+      min: 0.0
+      25%: 12.0
+      50%: 27.0
+      75%: 61.0
+      max: 1027.0
+      sample:
+      - 11.0
+      - 10.0
+      - 44.0
+      - 9.0
+      - 136.0
+    status:
+      description: Savoir si l'information a été vérifiée ou saisie automatiquement
+      type: object
+      value_count: 106077
+      unique_count: 2
+      duplicate_count: 106075
+      duplicate_ratio: 1.0
+      missing_count: 0
+      missing_ratio: 0.0
+      sample:
+      - reviewed
+      - automatic
