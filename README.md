@@ -66,4 +66,12 @@ Notes
 
 ## Statistiques descriptives
 
+![Statitstiques Time-Depth](./ressources/Capture%20d'écran%202026-01-30%20094815.png).
+![Statitstiques Mag-Gap](./ressources/Capture%20d'écran%202026-01-30%20094835.png).
+![Statitstiques Dmin-Updated](./ressources/Capture%20d'écran%202026-01-30%20094942.png).
+![Statitstiques Place-DepthError](./ressources/Capture%20d'écran%202026-01-30%20095029.png).
+![Statitstiques MagError-Status](./ressources/Capture%20d'écran%202026-01-30%20095036.png).
+
 ## Corrélation
+
+![Corrélation par régression linéaire](./ressources/Capture%20d'écran%202026-01-30%20095345.png).
