@@ -1,6 +1,6 @@
 name: 200-years-of-global-major-earthquakes
 version: '1.0'
-created: '2026-01-30 17:51:06'
+created: '2026-02-20 16:18:37'
 domain: seismology
 period: 1826-2026
 data:
@@ -75,7 +75,7 @@ data:
       stats:
         count: 105484.0
         unique_count: 11665.0
-        duplicate_count: 94412.0
+        duplicate_count: 93819.0
         duplicate_ratio: 0.89
         missing_count: 593.0
         missing_ratio: 0.01
@@ -137,8 +137,8 @@ data:
       stats:
         count: 31347.0
         unique_count: 737.0
-        duplicate_count: 105340.0
-        duplicate_ratio: 0.99
+        duplicate_count: 30610.0
+        duplicate_ratio: 0.98
         missing_count: 74730.0
         missing_ratio: 0.7
         mean: 157.56850735317573
@@ -160,8 +160,8 @@ data:
       stats:
         count: 41986.0
         unique_count: 1860.0
-        duplicate_count: 104217.0
-        duplicate_ratio: 0.98
+        duplicate_count: 40126.0
+        duplicate_ratio: 0.96
         missing_count: 64091.0
         missing_ratio: 0.6
         mean: 63.119420327754575
@@ -183,8 +183,8 @@ data:
       stats:
         count: 21402.0
         unique_count: 8993.0
-        duplicate_count: 97084.0
-        duplicate_ratio: 0.92
+        duplicate_count: 12409.0
+        duplicate_ratio: 0.58
         missing_count: 84675.0
         missing_ratio: 0.8
         mean: 4.2368525003793485
@@ -206,7 +206,7 @@ data:
       stats:
         count: 74560.0
         unique_count: 271.0
-        duplicate_count: 105806.0
+        duplicate_count: 74289.0
         duplicate_ratio: 1.0
         missing_count: 31517.0
         missing_ratio: 0.3
@@ -261,7 +261,7 @@ data:
       stats:
         count: 105855.0
         unique_count: 64262.0
-        duplicate_count: 41815.0
+        duplicate_count: 41593.0
         duplicate_ratio: 0.39
         missing_count: 222.0
         missing_ratio: 0.0
@@ -293,8 +293,8 @@ data:
       stats:
         count: 19983.0
         unique_count: 1355.0
-        duplicate_count: 104722.0
-        duplicate_ratio: 0.99
+        duplicate_count: 18628.0
+        duplicate_ratio: 0.93
         missing_count: 86094.0
         missing_ratio: 0.81
         mean: 7.834729106361849
@@ -316,8 +316,8 @@ data:
       stats:
         count: 54440.0
         unique_count: 3107.0
-        duplicate_count: 102970.0
-        duplicate_ratio: 0.97
+        duplicate_count: 51333.0
+        duplicate_ratio: 0.94
         missing_count: 51637.0
         missing_ratio: 0.49
         mean: 7.982370113248731
@@ -339,8 +339,8 @@ data:
       stats:
         count: 36554.0
         unique_count: 339.0
-        duplicate_count: 105738.0
-        duplicate_ratio: 1.0
+        duplicate_count: 36215.0
+        duplicate_ratio: 0.99
         missing_count: 69523.0
         missing_ratio: 0.66
         mean: 0.17152278280441455
@@ -362,8 +362,8 @@ data:
       stats:
         count: 42353.0
         unique_count: 665.0
-        duplicate_count: 105412.0
-        duplicate_ratio: 0.99
+        duplicate_count: 41688.0
+        duplicate_ratio: 0.98
         missing_count: 63724.0
         missing_ratio: 0.6
         mean: 54.878497390975845
