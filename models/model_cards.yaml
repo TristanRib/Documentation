@@ -1,0 +1,128 @@
+version: "1.0"
+
+model_cards:
+  # ----------------------------------------------------------------
+  # Model Card : Magnitude - XGBRegressor
+  # ----------------------------------------------------------------
+  - id: magnitude-xgbregressor
+
+    model_details:
+      name: "Magnitude - XGBRegressor"
+      library: xgboost
+      architecture: "XGBRegressor (default)"
+      random_state: 42
+      last_published: "2026-01"
+      authors:
+        - "Thomas Busin"
+        - "Riboulet--Depret Tristan"
+        - "Van-Duysen Nicolas"
+      institution: "EPSI Lille — Mastère Intelligence Artificielle"
+
+    intended_use:
+      description: >
+        Déterminer la magnitude d'un séisme depuis les informations obtenues
+        par une station de sismologie (date, latitude, longitude, profondeur, etc.).
+
+    data:
+      preprocessing:
+        - "Normalisation des colonnes numériques via StandardScaler (scikit-learn)"
+        - "Imputation des valeurs nulles"
+        - "Encodage de la variable catégorielle 'magType'"
+      numerical_features:
+        - latitude
+        - longitude
+        - depth
+        - mag
+        - nst
+        - gap
+        - dmin
+        - rms
+        - horizontalError
+        - depthError
+        - magError
+        - magNst
+        - date_ts_ms
+
+    training:
+      split_method: train_test_split
+      train_ratio: 0.8
+      random_state: 42
+      dataset:
+        features: 40
+        observations: 84861
+      hyperparameters:
+        note: "Hyperparamètres par défaut — impact négligeable sur les métriques"
+
+    metrics:
+      MAE:
+        label: "Mean Absolute Error"
+        value: 0.4159
+      RMSE:
+        label: "Root Mean Squared Error"
+        value: 0.6041
+      R2:
+        label: "Coefficient de détermination"
+        value: 0.6255
+
+  # ----------------------------------------------------------------
+  # Model Card : Depth - XGBRegressor
+  # ----------------------------------------------------------------
+  - id: depth-xgbregressor
+
+    model_details:
+      name: "Depth - XGBRegressor"
+      library: xgboost
+      architecture: "XGBRegressor (default)"
+      random_state: 42
+      last_published: "2026-01"
+      authors:
+        - "Thomas Busin"
+        - "Riboulet--Depret Tristan"
+        - "Van-Duysen Nicolas"
+      institution: "EPSI Lille — Mastère Intelligence Artificielle"
+
+    intended_use:
+      description: >
+        Déterminer la profondeur d'un séisme depuis les informations obtenues
+        par une station de sismologie (date, latitude, longitude, profondeur, etc.).
+
+    data:
+      preprocessing:
+        - "Normalisation des colonnes numériques via StandardScaler (scikit-learn)"
+        - "Imputation des valeurs nulles"
+        - "Encodage de la variable catégorielle 'magType'"
+      numerical_features:
+        - latitude
+        - longitude
+        - depth
+        - mag
+        - nst
+        - gap
+        - dmin
+        - rms
+        - horizontalError
+        - depthError
+        - magError
+        - magNst
+        - date_ts_ms
+
+    training:
+      split_method: train_test_split
+      train_ratio: 0.8
+      random_state: 42
+      dataset:
+        features: 40
+        observations: 84861
+      hyperparameters:
+        note: "Hyperparamètres par défaut — impact négligeable sur les métriques"
+
+    metrics:
+      MAE:
+        label: "Mean Absolute Error"
+        value: 0.2139
+      RMSE:
+        label: "Root Mean Squared Error"
+        value: 0.4051
+      R2:
+        label: "Coefficient de détermination"
+        value: 0.8384
