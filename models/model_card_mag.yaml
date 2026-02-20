@@ -1,0 +1,114 @@
+version: "2.0"
+
+# ----------------------------------------------------------------
+# Model Card : Magnitude - XGBRegressor
+# ----------------------------------------------------------------
+model_card_magnitude:
+  model_details:
+    name: "Magnitude - XGBRegressor"
+    library: xgboost
+    architecture: "XGBRegressor (default)"
+    random_state: 42
+    last_published: "2026-01"
+    authors:
+      - "Thomas Busin"
+      - "Riboulet--Depret Tristan"
+      - "Van-Duysen Nicolas"
+    institution: "EPSI Lille — Mastère Intelligence Artificielle"
+
+  intended_use:
+    description: >
+      Déterminer la magnitude d'un séisme depuis les informations obtenues
+      par une station de sismologie (date, latitude, longitude, profondeur, etc.).
+
+  biases_risks_limitations:
+    biases:
+      - name: "Biais d'historicité"
+        description: >
+          Les instruments de mesure d'il y a 200 ans étaient bien moins performants
+          que ceux de nos jours, des séismes de même magnitude peuvent avoir été
+          observés différemment d'une période à l'autre.
+      - name: "Biais humain"
+        description: >
+          Les mesures dépendent d'humains qui pour des raisons politiques,
+          idéologiques... ont pu taire ou communiquer des séismes avec des
+          données erronées.
+      - name: "Biais géographique"
+        description: >
+          Certaines zones géographiques sismiques peuvent être mal évaluées
+          par manque de moyens.
+      - name: "Biais statistique"
+        description: >
+          L'auteur du dataset a pu limiter la quantité de séismes lors de la
+          création du dataset et donc en omettre certains.
+    risks:
+      - description: >
+          En manquant de données dans certaines zones, on peut sous-estimer
+          la magnitude d'un séisme dans une zone jusqu'alors peu risquée.
+      - description: >
+          Se fier aveuglément à ce modèle de prédiction peut engendrer soit
+          des mesures coûteuses et inutiles, soit ignorer certaines catastrophes
+          qui pourraient coûter des vies.
+    limitations:
+      - name: "Limitation du dataset"
+        description: >
+          Ce dataset ne comptabilise que les séismes d'une magnitude supérieure
+          ou égale à 5, ce qui fait que le modèle ne peut prédire efficacement
+          seulement les magnitudes comprises entre 5 et 10.
+
+  data:
+    preprocessing:
+      numerical_normalization:
+        method: "StandardScaler"
+        library: "scikit-learn"
+        url: "https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html"
+        description: >
+          Permet à toutes les variables d'être évaluées sur la même échelle
+          et de réduire les écarts entre les features tout en respectant celui-ci.
+        numerical_features:
+          - latitude
+          - longitude
+          - depth
+          - mag
+          - nst
+          - gap
+          - dmin
+          - rms
+          - horizontalError
+          - depthError
+          - magError
+          - magNst
+          - date_ts_ms
+      null_handling:
+        column: "place"
+        strategy: "fill"
+        fill_value: "Inconnu"
+      categorical_encoding:
+        column: "magType"
+        method: "get_dummies"
+        library: "pandas"
+        url: "https://pandas.pydata.org/docs/reference/api/pandas.get_dummies.html"
+
+  training:
+    split_method: train_test_split
+    train_ratio: 0.8
+    random_state: 42
+    dataset:
+      features: 40
+      observations: 84861
+    hyperparameters:
+      note: "Hyperparamètres par défaut — impact négligeable sur les métriques"
+
+  metrics:
+    evaluated_metrics:
+      - MAE
+      - RMSE
+      - R2
+    results:
+      MAE: 0.4159
+      RMSE: 0.6041
+      R2: 0.6255
+    interpretation: >
+      Avec ces métriques, on remarque que le coefficient de détermination est
+      plutôt élevé et la MAE moyenne. On peut donc en déduire que le modèle
+      est assez performant mais avec beaucoup d'erreurs importantes comme l'indique le RMSE.
