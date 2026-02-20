@@ -14,7 +14,9 @@ L’objectif est d’explorer, analyser et construire un modèle prédictif à p
 
 **Source** : https://www.kaggle.com/datasets/dhrubangtalukdar/200-years-of-global-major-earthquakes-18262026
 
-**Description** : Ce dataset répertorie des séismes majeurs (généralement d’un seuil significatif de magnitude ou impact) sur une période de 1826 à 2026. Les variables typiques incluent des informations temporelles, géographiques et sismologiques pour chaque événement
+**Description** : Ce dataset répertorie des séismes majeurs (généralement d’un seuil significatif de magnitude ou impact) sur une période de 1826 à 2026. Les variables typiques incluent des informations temporelles, géographiques et sismologiques pour chaque événement.
+
+Voir la [datacard](./data/raw_data.yaml) pour la description des données.
 
 ---
 
@@ -61,11 +63,10 @@ Contient :
 
 ## Methodology
 
-1. Import et nettoyage du dataset
-2. Analyse exploratoire des données (EDA)
-3. Feature engineering (extraction de tendances temporelles, clustering géographique)
-4. Sélection et entraînement de modèles de prédiction
-5. Évaluation des métriques (MAE, RMSE, R²)
+1. Import et analyse exploratoire des données (EDA)
+2. Feature engineering (extraction de tendances temporelles, clustering géographique)
+3. Sélection et entraînement de modèles de prédiction
+4. Évaluation des métriques (MAE, RMSE, R²)
 
 ---
 
