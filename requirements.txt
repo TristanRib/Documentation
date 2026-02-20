@@ -1,3 +1,4 @@
+jupyter
 kagglehub
 
 pandas
@@ -9,4 +10,5 @@ seaborn
 scikit-learn
 xgboost
 
-PyYAML
+pyyaml
+joblib
