@@ -66,8 +66,7 @@ Contient :
 
 1. Cloner le dépôt
 2. Installer les dépendances : `pip install -r requirements.txt`
-3. Télécharger le dataset via Kaggle
-4. Exécuter les notebooks dans l’ordre :
+3. Exécuter les notebooks dans l’ordre :
     - [01_exploration.ipynb](./notebooks/01_exploration.ipynb)
     - [02_transformation.ipynb](./notebooks/02_transformation.ipynb)
     - [03_training.ipynb](./notebooks/03_training.ipynb)
