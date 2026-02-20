@@ -20,19 +20,12 @@ Voir la [datacard](./data/raw_data.yaml) pour la description des données.
 
 ---
 
-## Project Dependencies
+## Methodology
 
-| Catégorie              | Librairie         | Utilisation                                           |
-|------------------------|-------------------|-------------------------------------------------------|
-| Manipulation de données | pandas            | Chargement, nettoyage et transformation des données   |
-| Calcul numérique        | numpy             | Opérations numériques et manipulation de tableaux     |
-| Visualisation           | matplotlib        | Graphiques et visualisations                          |
-| Visualisation           | seaborn           | Visualisation statistique                             |
-| Machine Learning        | scikit-learn      | Prétraitement, training & évaluation de modèles       |
-| Machine Learning        | xgboost           | Modèle de gradient boosting                           |
-| Accès données           | kagglehub         | Téléchargement depuis Kaggle                          |
-| Configuration           | yaml (PyYAML)     | Chargement de configurations                          |
-| Standard Library        | datetime          | Gestion des dates et heures                           |
+1. Import et analyse exploratoire des données (EDA)
+2. Feature engineering (extraction de tendances temporelles, clustering géographique)
+3. Sélection et entraînement de modèles de prédiction
+4. Évaluation des métriques (MAE, RMSE, R²)
 
 ---
 
@@ -61,15 +54,6 @@ Contient :
 
 ---
 
-## Methodology
-
-1. Import et analyse exploratoire des données (EDA)
-2. Feature engineering (extraction de tendances temporelles, clustering géographique)
-3. Sélection et entraînement de modèles de prédiction
-4. Évaluation des métriques (MAE, RMSE, R²)
-
----
-
 ## Usage
 
 1. Cloner le dépôt
@@ -85,3 +69,17 @@ Contient :
 
 - Version Python recommandée : `>=3.9`
 - Seed fixée pour la reproductibilité des splits
+
+### Project Dependencies
+
+| Catégorie              | Librairie         | Utilisation                                           |
+|------------------------|-------------------|-------------------------------------------------------|
+| Manipulation de données | pandas            | Chargement, nettoyage et transformation des données   |
+| Calcul numérique        | numpy             | Opérations numériques et manipulation de tableaux     |
+| Visualisation           | matplotlib        | Graphiques et visualisations                          |
+| Visualisation           | seaborn           | Visualisation statistique                             |
+| Machine Learning        | scikit-learn      | Prétraitement, training & évaluation de modèles       |
+| Machine Learning        | xgboost           | Modèle de gradient boosting                           |
+| Accès données           | kagglehub         | Téléchargement depuis Kaggle                          |
+| Configuration           | yaml (PyYAML)     | Chargement de configurations                          |
+| Standard Library        | datetime          | Gestion des dates et heures                           |
