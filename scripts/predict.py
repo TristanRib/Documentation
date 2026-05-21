@@ -17,12 +17,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 
 def load_models(data_dir: str = DATA_DIR):
     iso_path = os.path.join(data_dir, "iso_forest.pkl")
-    if not os.path.exists(iso_path):
-        raise FileNotFoundError(
-            f"{iso_path} introuvable.\n"
-            "Relancez la cellule de sauvegarde dans 03_training.ipynb "
-            "(joblib.dump(iso_forest, '../data/iso_forest.pkl'))."
-        )
+
     return (
         joblib.load(iso_path),
         joblib.load(os.path.join(data_dir, "xgb_model.pkl")),
@@ -33,8 +28,7 @@ def load_models(data_dir: str = DATA_DIR):
 
 def predict_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """
-    df : DataFrame avec au moins les colonnes de FEATURES.
-         Les colonnes manquantes sont remplies par NaN avant imputation.
+    df : DataFrame avec les colonnes de FEATURES.
 
     Retourne le DataFrame d'origine enrichi de quatre colonnes :
         mag_prediction : magnitude prédite par XGBoost

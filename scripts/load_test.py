@@ -3,9 +3,7 @@ import time
 import tracemalloc
 import os
 import sys
-
-sys.path.insert(0, os.path.dirname(__file__))
-from predict import predict_dataset
+from scripts.predict import predict_dataset
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "transformed_data.csv")
 
