@@ -2,16 +2,23 @@ import pandas as pd
 import time
 import tracemalloc
 import os
-import sys
 from scripts.predict import predict_dataset
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "transformed_data.csv")
 
-df = pd.read_csv(DATA_PATH)
 
-for i in range(5):
-    length = len(df)
-    df_test = df.iloc[: length // 5 * (i + 1)]
+df = pd.read_csv(DATA_PATH)
+percentages = [20, 40, 60, 80, 100, 200, 300, 400, 500]
+
+print(f"{'Samples':>16} {'Time':>10} {'Max RAM':>10} {'Anomalies':>12}")
+print("-" * 58)
+
+for pct in percentages:
+    multiplier, remainder = divmod(pct, 100)
+    parts = [df] * multiplier
+    if remainder:
+        parts.append(df.iloc[: len(df) * remainder // 100])
+    df_test = pd.concat(parts, ignore_index=True) if len(parts) > 1 else parts[0].reset_index(drop=True)
 
     tracemalloc.start()
     start = time.time()
@@ -19,15 +26,13 @@ for i in range(5):
     result = predict_dataset(df_test)
 
     total_time = time.time() - start
-    current_ram, peak_ram = tracemalloc.get_traced_memory()
+    _, peak_ram = tracemalloc.get_traced_memory()
     tracemalloc.stop()
 
-    peak_ram_mb = peak_ram / (1024 * 1024)
+    size = len(df_test)
     n_anomalies = (result["iso_label"] == "anomalie").sum()
-
+    samples_col = f"{size} ({pct}%)"
     print(
-        f"Iteration {i+1} | Samples: {len(df_test):>6} "
-        f"| Time: {total_time:.4f}s "
-        f"| Max RAM: {peak_ram_mb:.2f} MB "
-        f"| Anomalies: {n_anomalies} ({100 * n_anomalies / len(df_test):.1f}%)"
+        f"{samples_col:>16} {total_time:>9.4f}s {peak_ram / 1024**2:>9.2f}MB "
+        f"{n_anomalies:>6} ({100 * n_anomalies / size:.1f}%)"
     )
