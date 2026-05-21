@@ -75,3 +75,6 @@ plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig(PLOT_PATH, dpi=150)
 print(f"\nGraphique sauvegardé : {PLOT_PATH}")
+
+# On remarque sur notre graphique qu'en dehors de la première instance qui instancie les objets dans predict_dataset, l'utilisation mémoire et le temps de réponse augmentent linéairement.
+# Ca permet une prédiction des besoins systèmes simple et en fait un modèle plutot léger et robuste à l'augmentation du volume de donnée. 160mb pour 500K+ observations est très réduit, en plus d'un temps de réponses de 2secondes.
