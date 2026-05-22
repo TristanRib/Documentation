@@ -30,9 +30,14 @@ def df_test(df_full):
     return test.reset_index(drop=True)
 
 
+@pytest.fixture(scope="module", params=["xgb", "rf"])
+def model_name(request):
+    return request.param
+
+
 @pytest.fixture(scope="module")
-def preds(df_test):
-    return predict_dataset(df_test)
+def preds(df_test, model_name):
+    return predict_dataset(df_test, model_name=model_name)
 
 
 def _mae(y_true, y_pred, mask=None):
@@ -155,7 +160,7 @@ def test_uc07_score_anomalie(df_test, preds):
 # UC08 — Résistance au bruit sur lat / lon
 # ============================================================
 @pytest.mark.robustness
-def test_uc08_bruit_latlon(df_test, preds):
+def test_uc08_bruit_latlon(df_test, preds, model_name):
     """Un bruit de ~1 km sur lat/lon ne doit pas dégrader la MAE de plus de 0.05."""
     rng = np.random.default_rng(RANDOM_STATE)
     lat, lon = _latlon_degrees(df_test)
@@ -168,7 +173,7 @@ def test_uc08_bruit_latlon(df_test, preds):
     df_noisy["lon_sin"] = np.sin(np.radians(lon_noisy))
     df_noisy["lon_cos"] = np.cos(np.radians(lon_noisy))
 
-    preds_noisy = predict_dataset(df_noisy)
+    preds_noisy = predict_dataset(df_noisy, model_name=model_name)
     mae_clean = _mae(df_test["mag"].values, preds["mag_prediction"].values)
     mae_noisy = _mae(df_test["mag"].values, preds_noisy["mag_prediction"].values)
     delta = mae_noisy - mae_clean
@@ -182,7 +187,7 @@ def test_uc08_bruit_latlon(df_test, preds):
 # UC09 — Imputation : masquer 20 % de dmin et rms
 # ============================================================
 @pytest.mark.robustness
-def test_uc09_imputation(df_test):
+def test_uc09_imputation(df_test, model_name):
     """Avec 20 % de masquage sur dmin/rms, la MAE doit rester sous 0.55."""
     rng = np.random.default_rng(RANDOM_STATE)
     df_masked = df_test.copy()
@@ -190,7 +195,7 @@ def test_uc09_imputation(df_test):
         idx = rng.choice(len(df_masked), size=int(0.2 * len(df_masked)), replace=False)
         df_masked.loc[df_masked.index[idx], col] = np.nan
 
-    preds_masked = predict_dataset(df_masked)
+    preds_masked = predict_dataset(df_masked, model_name=model_name)
     mae = _mae(df_test["mag"].values, preds_masked["mag_prediction"].values)
     assert mae < 0.55, f"MAE après masquage 20 % : {mae:.4f} (attendu < 0.55)"
 
@@ -199,11 +204,11 @@ def test_uc09_imputation(df_test):
 # UC10 — Tenue en charge
 # ============================================================
 @pytest.mark.perf
-def test_uc10_tenue_en_charge(df_full):
+def test_uc10_tenue_en_charge(df_full, model_name):
     """100k observations doivent être prédites en < 30 s et < 500 MB de pic RAM."""
     tracemalloc.start()
     start = time.time()
-    _ = predict_dataset(df_full)
+    _ = predict_dataset(df_full, model_name=model_name)
     duration = time.time() - start
     _, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
