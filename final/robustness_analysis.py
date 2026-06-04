@@ -1,19 +1,3 @@
-"""Analyse de robustesse multi-pays (slide 56 du cours).
-
-Pipeline India (artefacts produits par train_india.py) :
-  - imputer_india.pkl          : SimpleImputer(median), fit train India
-  - scaler_india.pkl           : StandardScaler, fit train India
-  - isolation_forest_india.pkl : IsolationForest, fit X_train India normalise
-  - model_india.keras          : MLP dense 64-32-16-1
-
-Pour chaque pays (India test, USA, UK, Canada, Australia) on calcule :
-  1. Le score d'anomalie via l'IF India (RMSE vs Coverage, methode du coude)
-  2. La resistance a l'imputation par mediane India (degradation RMSE %)
-  3. La resistance au bruit gaussien (variation RMSE %)
-
-Tout est execute sans reentrainer aucun composant.
-"""
-
 import os
 os.environ["KERAS_BACKEND"]      = "tensorflow"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -49,23 +33,18 @@ IMPUTATION_BUCKETS = 20               # ~20 points sur l'axe x au lieu de 100
 
 
 def fast_predict(X):
-    """Inference rapide sans l'overhead de model.predict()."""
+    """Inference rapide"""
     import tensorflow as tf
     return model(tf.convert_to_tensor(X, dtype=tf.float32),
                  training=False).numpy().flatten()
 
-
-# =============================================================================
-# 1. Chargement des artefacts India
-# =============================================================================
-print("Chargement des artefacts India...")
 imputer    = joblib.load(os.path.join(BASE_DIR, "imputer_india.pkl"))
 scaler     = joblib.load(os.path.join(BASE_DIR, "scaler_india.pkl"))
 iso_forest = joblib.load(os.path.join(BASE_DIR, "isolation_forest_india.pkl"))
 model      = keras.models.load_model(os.path.join(BASE_DIR, "model_india.keras"))
 print("  imputer, scaler, iso_forest, model_india.keras OK")
 
-# India : on reproduit exactement le meme split que train_india.py
+# On reproduit le meme split que train_india.py
 data_india = pd.read_csv(os.path.join(DATA_DIR, "data_india.csv"))
 X_india    = data_india.drop(columns=["price_usd_normalized", "calories"])
 y_india    = data_india["price_usd_normalized"].values
@@ -78,17 +57,7 @@ y_pred_i        = fast_predict(X_test_i_scaled)
 rmse_india      = float(np.sqrt(mean_squared_error(y_test_i, y_pred_i)))
 print(f"RMSE India (test) : {rmse_india:.4f}")
 
-
-# =============================================================================
-# 2. Fonctions helper
-# =============================================================================
-
 def isolation_test(X_scaled, y_true, y_pred):
-    """Methode du coude (slide 25) : RMSE vs Coverage en balayant le seuil IF.
-
-    Retourne (thresholds, coverages%, rmses, best_thr, best_rmse).
-    best_thr = seuil le plus strict avec coverage >= COVERAGE_TARGET et RMSE min.
-    """
     scores     = iso_forest.score_samples(X_scaled)
     thresholds = np.linspace(scores.min(), scores.max(), 100)
     coverages, rmses = [], []
@@ -112,12 +81,6 @@ def isolation_test(X_scaled, y_true, y_pred):
 
 
 def imputation_test(X_raw, y_true, rmse_base, seed=SEED):
-    """Slide 29 : degradation RMSE en fonction du nombre de NaN imputes.
-
-    Pour chaque feature continue, on retire de 1% a 100% des valeurs (MCAR),
-    on les remplit avec l'imputer India (median), et on mesure la degradation
-    relative en RMSE. Moyenne sur N_REPEATS tirages.
-    """
     rng         = np.random.default_rng(seed)
     n_total     = X_raw.shape[0]
     range_scale = max(1, n_total // IMPUTATION_BUCKETS)
@@ -142,10 +105,6 @@ def imputation_test(X_raw, y_true, rmse_base, seed=SEED):
 
 
 def noise_test(X_raw, y_true, rmse_base, seed=SEED):
-    """Slides 14-15 : bruit gaussien proportionnel a l'ecart-type de la feature.
-
-    Niveaux : 1, 3, 5, 10, 15, 20 % de std. Variation relative de RMSE (%).
-    """
     X_base    = imputer.transform(X_raw)
     variation = {f: [] for f in CONTINUOUS_COLS}
 
@@ -164,10 +123,6 @@ def noise_test(X_raw, y_true, rmse_base, seed=SEED):
             variation[feat].append(100 * (np.mean(runs) - rmse_base) / rmse_base)
     return variation
 
-
-# =============================================================================
-# 3. Analyse India (sur X_test)
-# =============================================================================
 print("\n--- India (test set, N=%d) ---" % len(y_test_i))
 thr_i, cov_i, rmse_i, best_thr_i, best_rmse_i = isolation_test(
     X_test_i_scaled, y_test_i, y_pred_i
@@ -188,12 +143,8 @@ results = {
     }
 }
 
-
-# =============================================================================
-# 4. Analyse autres pays (dataset complet, sans reentrainement)
-# =============================================================================
 for country in COUNTRIES:
-    print(f"\n--- {country} (dataset complet) ---")
+    print(f"\n--- {country} ---")
     data_c = pd.read_csv(os.path.join(DATA_DIR, f"data_{country.lower()}.csv"))
     X_c    = data_c.drop(columns=["price_usd_normalized", "calories"])
     y_c    = data_c["price_usd_normalized"].values
@@ -220,14 +171,9 @@ for country in COUNTRIES:
         "variation": variation_c,
     }
 
-
-# =============================================================================
-# 5. Figures
-# =============================================================================
-print("\nGeneration des figures...")
 ALL_COUNTRIES = ["India"] + COUNTRIES
 
-# Figure 1 : RMSE vs Coverage (methode du coude)
+# Figure RMSE vs Coverage
 fig, axes = plt.subplots(2, 3, figsize=(18, 10))
 axes = axes.flatten()
 for i, country in enumerate(ALL_COUNTRIES):
@@ -255,9 +201,9 @@ fig.suptitle("Analyse de robustesse : RMSE vs Coverage (Isolation Forest India)"
 plt.tight_layout()
 fig.savefig(os.path.join(RESULTS_DIR, "isolation_rmse_coverage.png"), dpi=150)
 plt.close(fig)
-print("  isolation_rmse_coverage.png")
+print("isolation_rmse_coverage.png")
 
-# Figure 2 : Impact imputation
+# Figure Impact imputation
 fig, axes = plt.subplots(1, len(ALL_COUNTRIES), figsize=(20, 5), sharey=True)
 for ax, country in zip(axes, ALL_COUNTRIES):
     r = results[country]
@@ -273,9 +219,9 @@ fig.suptitle("Impact de l'imputation par mediane India sur la degradation RMSE",
 plt.tight_layout()
 fig.savefig(os.path.join(RESULTS_DIR, "imputation_degradation.png"), dpi=150)
 plt.close(fig)
-print("  imputation_degradation.png")
+print("imputation_degradation.png")
 
-# Figure 3 : Test de bruit
+# Figure Test de bruit
 fig, axes = plt.subplots(1, len(ALL_COUNTRIES), figsize=(20, 5), sharey=True)
 for ax, country in zip(axes, ALL_COUNTRIES):
     r = results[country]
@@ -290,43 +236,4 @@ fig.suptitle("Test de robustesse au bruit gaussien (variation RMSE)", fontsize=1
 plt.tight_layout()
 fig.savefig(os.path.join(RESULTS_DIR, "noise_variation.png"), dpi=150)
 plt.close(fig)
-print("  noise_variation.png")
-
-
-# =============================================================================
-# 6. Tableau de synthese
-# =============================================================================
-print(f"\n{'='*70}")
-print("SYNTHESE DES ZONES DE ROBUSTESSE")
-print(f"{'='*70}")
-print(f"{'Pays':<12} {'N':>5} {'RMSE base':>10} {'Seuil IF':>10} "
-      f"{'RMSE @70%':>10} {'Gain RMSE':>10}")
-print("-" * 70)
-for country in ALL_COUNTRIES:
-    r    = results[country]
-    thr  = f"{r['best_thr']:.4f}" if r["best_thr"] is not None else "N/A"
-    gain = (r["rmse_base"] - r["best_rmse"]) / r["rmse_base"] * 100
-    print(f"{country:<12} {r['n']:>5} {r['rmse_base']:>10.4f} "
-          f"{thr:>10} {r['best_rmse']:>10.4f} {gain:>9.1f}%")
-
-
-
-# =============================================================================
-# 7. Sensibilites extremes (a 20% bruit / 100% NaN) imprimees a l'ecran
-# =============================================================================
-print("\n" + "=" * 80)
-print("FEATURES LES PLUS SENSIBLES")
-print("=" * 80)
-print(f"{'Pays':<12} {'Bruit max @20%':<35} {'Imputation max @100%':<35}")
-print("-" * 80)
-for country in ALL_COUNTRIES:
-    v = results[country]["variation"]
-    d = results[country]["degradation"]
-    nf = max(v, key=lambda f: v[f][-1])
-    df = max(d, key=lambda f: d[f][-1])
-    print(f"{country:<12} "
-          f"{nf + f' ({v[nf][-1]:+.1f}%)':<35} "
-          f"{df + f' ({d[df][-1]:+.1f}%)':<35}")
-
-print(f"\nFigures dans : {RESULTS_DIR}")
-print("Termine.")
+print("noise_variation.png")

@@ -138,7 +138,7 @@ Zones de robustesse retenues (seuil IsolationForest au-dessus duquel l'entrée e
 
 ### Pourquoi un tel écart de RMSE entre India et les autres pays ?
 
-La RMSE de base passe de 1.80 pour l'Inde à entre 7 et 10 pour les autres pays, soit un facteur à presque x5. Cet écart traduit un distribution shift sur la cible : les cinq pays sont extraits du même CSV mondial, donc leurs macronutriments restent comparables (un steak fait globalement les mêmes calories partout), mais `price_usd_normalized` reflète des réalités économiques très différentes (coût de la vie, marges des chaînes, TVA). Le MLP a appris la relation macros => prix sur le marché indien et il n'a aucune raison de produire le bon prix américain ou britannique.
+La RMSE de base passe de 1.80 pour l'Inde à entre 7 et 10 pour les autres pays. Cet écart traduit un distribution shift sur la cible : les cinq pays sont extraits du même CSV mondial, donc leurs macronutriments restent comparables (un steak fait globalement les mêmes calories partout), mais `price_usd_normalized` reflète des réalités économiques très différentes (coût de la vie, marges des chaînes, TVA). Le MLP a appris la relation macros => prix sur le marché indien et il n'a aucune raison de produire le bon prix américain ou britannique.
 
 ### Pourquoi le seuil IF retenu est-il quasi-identique entre les pays (environ -0.525) ?
 
