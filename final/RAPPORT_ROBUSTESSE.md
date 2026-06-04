@@ -8,7 +8,7 @@ On a :
 
 1. Entraîné une Isolation Forest sur le dataset India (`isolation_forest_india.pkl`), avec le `SimpleImputer` (médiane) et le `StandardScaler` aussi fittés sur India uniquement.
 2. Choisi une zone de robustesse par la méthode du coude : on balaie le seuil de score IsolationForest et on retient le seuil le plus strict qui conserve au moins 70 % des observations, en réduisant la RMSE sur ce sous-ensemble.
-3. Importé les datasets des quatre autres pays (USA, UK, Canada, Australie) et fait passer dans le même pipeline (imputer + scaler + isolation forest + modèle MLP), sans rien réentraîner.
+3. Importé les datasets des quatre autres pays (USA, UK, Canada, Australie) et fait passer dans le même pipeline (imputer + scaler + isolation forest + modèle MLP), sans réentraîner.
 4. Pour chaque pays, mesuré :
    - La résistance au bruit : bruit gaussien proportionnel à l'écart-type de chaque feature, niveaux de 1 à 20 %.
    - La résistance à l'imputation : retrait MCAR de 1 à 100 % des valeurs, ré-imputation par la médiane de l'Inde.
@@ -28,15 +28,15 @@ Toutes les figures correspondantes sont dans le dossier `results/`.
 | Canada    |  901 |    7.0113 |  -0.5263 |    5.1212 | 27.0% |
 | Australia |  629 |    7.9274 |  -0.5227 |    5.6325 | 28.9% |
 
-Zones de robustesse retenues (seuil IsolationForest au-dessus duquel l'entrée est considérée comme "dans le domaine de robustesse") :
+### Pourquoi le seuil IF retenu est-il quasi-identique entre les pays ?
 
-- Inde : score >= -0.5256
-- USA : score >= -0.5243
-- UK : score >= -0.5287
-- Canada : score >= -0.5263
-- Australie : score >= -0.5227
+L'Isolation Forest a été calibrée sur l'Inde : elle produit donc des scores plus extrêmes sur les autres pays (plus d'"anomalies"), mais la forme générale de la distribution des scores reste plutôt égale. Le seuil défini par coverage >= 70 % tombe donc à peu près au même endroit sur l'axe des scores pour tous les pays. Cela signifie aussi que l'IF agit comme un détecteur indirect de distribution shift : sur USA/UK/Canada/Australie, les points classés "anormaux" sont ceux qui s'écartent le plus de la distribution indienne qui sont effectivement ceux où le MLP extrapole le plus.
 
-## 2. Sensibilités extrêmes
+### Pourquoi le Gain en RMSE est-il constantentre les pays ?
+
+On a fixé un coverage de 70 %, donc on coupe systématiquement les 30 % d'observations les plus atypiques. Le gain de environ 30 % est en grande partie mécanique.
+
+## 2. Sensibilités
 
 | Pays      | Bruit max (20%)          | Imputation max (100% NaN) |
 | --------- | ------------------------ | ------------------------- |
@@ -86,6 +86,10 @@ Zones de robustesse retenues (seuil IsolationForest au-dessus duquel l'entrée e
 | Australia / `sugars_g`       | -0.00 | -0.01 | -0.01 | -0.00 | +0.02 | -0.00 |
 | Australia / `avg_rating`     | -0.00 | -0.00 | -0.01 | -0.01 | -0.01 | -0.02 |
 
+### Pourquoi un tel écart de RMSE entre India et les autres pays ?
+
+La RMSE de base passe de 1.80 pour l'Inde à entre 7 et 10 pour les autres pays. Cet écart traduit un distribution shift sur la cible : les cinq pays sont extraits du même CSV mondial, donc leurs macronutriments restent comparables (un steak fait globalement les mêmes calories partout), mais `price_usd_normalized` reflète des réalités économiques très différentes (coût de la vie, marges des chaînes, TVA). Le MLP a appris la relation macros => prix sur le marché indien et il n'a aucune raison de produire le bon prix américain ou britannique.
+
 ## 4. Dégradation RMSE (%) par taux d'imputation
 
 | Pays / Feature               |   10% |   25% |   50% |   75% |  100% |
@@ -134,19 +138,7 @@ Zones de robustesse retenues (seuil IsolationForest au-dessus duquel l'entrée e
 
 ---
 
-## 6. Analyse des raisons
-
-### Pourquoi un tel écart de RMSE entre India et les autres pays ?
-
-La RMSE de base passe de 1.80 pour l'Inde à entre 7 et 10 pour les autres pays. Cet écart traduit un distribution shift sur la cible : les cinq pays sont extraits du même CSV mondial, donc leurs macronutriments restent comparables (un steak fait globalement les mêmes calories partout), mais `price_usd_normalized` reflète des réalités économiques très différentes (coût de la vie, marges des chaînes, TVA). Le MLP a appris la relation macros => prix sur le marché indien et il n'a aucune raison de produire le bon prix américain ou britannique.
-
-### Pourquoi le seuil IF retenu est-il quasi-identique entre les pays (environ -0.525) ?
-
-L'Isolation Forest a été calibrée sur l'Inde : elle produit donc des scores plus extrêmes sur les autres pays (plus d'"anomalies"), mais la forme générale de la distribution des scores reste plutôt égale. Le seuil défini par coverage >= 70 % tombe donc à peu près au même endroit sur l'axe des scores pour tous les pays. Cela signifie aussi que l'IF agit comme un détecteur indirect de distribution shift : sur USA/UK/Canada/Australie, les points classés "anormaux" sont ceux qui s'écartent le plus de la distribution indienne qui sont effectivement ceux où le MLP extrapole le plus.
-
-### Pourquoi le "Gain" est-il constant (environ 30 %) entre les pays ?
-
-On a fixé un coverage de 70 %, donc on coupe systématiquement les 30 % d'observations les plus atypiques. Le gain de environ 30 % est en grande partie mécanique.
+## 6. Analyse
 
 ### Pourquoi les % de sensibilité au bruit / imputation sont-ils quasi nuls sur les pays non-India ?
 
@@ -155,7 +147,7 @@ Ces pourcentages sont relatifs à la RMSE de base. Sur USA/UK/Canada/Australie, 
 - Le modèle est très robuste au bruit (=< 1.35 % max à 20 % de bruit).
 - Le modèle est plus sensible à l'imputation : `sodium_mg` dégrade de +8.0 % quand 100 % des valeurs sont remplacées par la médiane.
 
-### Pourquoi les courbes d'Australia sont les plus bruitées ?
+### Pourquoi les courbes d'Australie sont les plus bruitées ?
 
 Avec seulement 629 observations, l'estimation de la RMSE est moins stable.
 
@@ -163,9 +155,4 @@ Avec seulement 629 observations, l'estimation de la RMSE est moins stable.
 
 ## 7. Conclusion
 
-| Critère                       | Recommandation                                                                                                                                                                                                                    |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Filtre anomalie en production | Appliquer le seuil IF par pays (environ -0.525) avant chaque prédiction ; si le score est en-dessous, retourner "incertain" plutôt qu'un prix                                                                                     |
-| Bruit admissible              | < 10 % de l'écart-type par feature => dégradation < 1 % sur India                                                                                                                                                                 |
-| Imputation                    | Robuste sauf sur `sodium_mg` (à alerter ou refuser si manquant)                                                                                                                                                                   |
-| Multi-pays                    | Pipeline India non transférable telle quelle : RMSE x 4-5 sur les autres pays. Un fine-tuning par pays (ou un encodage explicite du pays en feature, ou un post-scaling du prix) est nécessaire pour un déploiement multi-marché. |
+Pipeline India non transférable telle quelle car une RMSE x 4-5 sur les autres pays. Un fine-tuning par pays (ou un encodage explicite du pays en feature, ou un post-scaling du prix) est nécessaire pour un déploiement
