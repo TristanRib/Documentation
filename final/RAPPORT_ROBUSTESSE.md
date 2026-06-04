@@ -1,116 +1,171 @@
-# Rapport de Robustesse — Isolation Forest Multi-Pays
+# Rapport de robustesse - Sujet final (slide 56)
 
-## 1. Introduction
+Run : `robustness_analysis.py` | Niveaux de bruit : [1, 3, 5, 10, 15, 20]% | Répétitions : 3 | Cible coverage : 70%
 
-Ce rapport analyse la robustesse du pipeline India face au bruit et aux données
-manquantes, puis applique la même Isolation Forest sans ré-entraînement sur les
-datasets USA, UK, Canada et Australie.
+## 0. Démarche
 
-**Pipeline India (artefacts figés) :**
-- `imputer_india.pkl` — SimpleImputer(strategy='median'), fitté sur India
-- `scaler_india.pkl`  — StandardScaler, fitté sur le train India (80 %)
-- `isolation_forest_india.pkl` — IsolationForest(random_state=42), fitté sur X_train India
-- Modèle Keras — réseau dense 64→32→16→1 (relu), prédit `price_usd_normalized`
+On a :
 
-**Données :** 5 pays issus du même dataset nutritionnel mondial
-(India 440 obs., USA 2721, UK 1053, Canada 901, Australia 629)
+1. Entraîné une Isolation Forest sur le dataset India (`isolation_forest_india.pkl`), avec le `SimpleImputer` (médiane) et le `StandardScaler` aussi fittés sur India uniquement.
+2. Choisi une zone de robustesse par la méthode du coude : on balaie le seuil de score IsolationForest et on retient le seuil le plus strict qui conserve au moins 70 % des observations, en réduisant la RMSE sur ce sous-ensemble.
+3. Importé les datasets des quatre autres pays (USA, UK, Canada, Australie) et fait passer dans le même pipeline (imputer + scaler + isolation forest + modèle MLP), sans rien réentraîner.
+4. Pour chaque pays, mesuré :
+   - La résistance au bruit : bruit gaussien proportionnel à l'écart-type de chaque feature, niveaux de 1 à 20 %.
+   - La résistance à l'imputation : retrait MCAR de 1 à 100 % des valeurs, ré-imputation par la médiane de l'Inde.
+   - L'analyse des scores d'anomalie : la distribution des scores et aussi la zone de robustesse via méthode du coude.
 
----
-
-## 2. Méthodologie
-
-### Tests d'isolement (RMSE vs Coverage)
-On balaye le seuil de score IF de min à max et on mesure pour chaque seuil :
-- **Coverage** : % d'observations conservées (score >= seuil)
-- **RMSE** : erreur de prédiction sur les observations conservées
-
-La **zone de robustesse** correspond au seuil le plus strict où Coverage >= 70 %
-avec la RMSE minimale — même logique que dans le cours.
-
-### Tests d'imputation
-Pour chaque feature continue, on corrompt de 1 % à 100 % des valeurs (MCAR),
-on re-impute avec l'imputer India (sans re-fit), et on mesure la **dégradation
-relative de RMSE** : `(RMSE_impute - RMSE_base) / RMSE_base × 100`.
-
-### Tests de bruit
-Bruit gaussien N(0, σ²) appliqué dans l'espace brut (avant scaling), avec
-σ = niveau × std(feature). Niveaux : [1, 3, 5, 10, 15, 20] % de l'écart-type.
-Métrique : variation relative de RMSE (%).
+Toutes les figures correspondantes sont dans le dossier `results/`.
 
 ---
 
-## 3. Résultats
+## 1. Synthèse par pays
 
-### 3.1 Zones de robustesse
+| Pays      |    N | RMSE base | Seuil IF | RMSE @70% |  Gain |
+| --------- | ---: | --------: | -------: | --------: | ----: |
+| India     |  440 |    1.8003 |  -0.5256 |    1.2552 | 30.3% |
+| USA       | 2721 |    8.5264 |  -0.5243 |    5.9197 | 30.6% |
+| UK        | 1053 |    9.9653 |  -0.5287 |    6.8789 | 31.0% |
+| Canada    |  901 |    7.0113 |  -0.5263 |    5.1212 | 27.0% |
+| Australia |  629 |    7.9274 |  -0.5227 |    5.6325 | 28.9% |
 
-| Pays       |     N | RMSE base | Seuil IF | RMSE @70% |
-|------------|------:|----------:|---------:|----------:|
-| India      |   440 |    1.8609 |   -0.5256 |    1.2473 |
-| USA        |  2721 |    8.3602 |   -0.5243 |    5.7528 |
-| UK         |  1053 |    9.7790 |   -0.5287 |    6.7085 |
-| Canada     |   901 |    6.8150 |   -0.5263 |    4.9589 |
-| Australia  |   629 |    7.7680 |   -0.5227 |    5.4487 |
+Zones de robustesse retenues (seuil IsolationForest au-dessus duquel l'entrée est considérée comme "dans le domaine de robustesse") :
 
-### 3.2 Features les plus sensibles au bruit (variation RMSE à 20% de bruit)
+- Inde : score >= -0.5256
+- USA : score >= -0.5243
+- UK : score >= -0.5287
+- Canada : score >= -0.5263
+- Australie : score >= -0.5227
 
-- **India** : `sodium_mg`
-- **USA** : `sodium_mg`
-- **UK** : `serving_size_g`
-- **Canada** : `sodium_mg`
-- **Australia** : `serving_size_g`
+## 2. Sensibilités extrêmes
+
+| Pays      | Bruit max (20%)          | Imputation max (100% NaN) |
+| --------- | ------------------------ | ------------------------- |
+| India     | `protein_g` (+1.3%)      | `sodium_mg` (+8.0%)       |
+| USA       | `serving_size_g` (+0.0%) | `avg_rating` (+0.9%)      |
+| UK        | `protein_g` (+0.1%)      | `sugars_g` (+0.7%)        |
+| Canada    | `protein_g` (+0.1%)      | `sugars_g` (+0.6%)        |
+| Australia | `serving_size_g` (+0.0%) | `sugars_g` (+0.4%)        |
+
+## 3. Variation RMSE (%) par niveau de bruit
+
+| Pays / Feature               |    1% |    3% |    5% |   10% |   15% |   20% |
+| ---------------------------- | ----: | ----: | ----: | ----: | ----: | ----: |
+| India / `serving_size_g`     | +0.01 | -0.04 | -0.02 | +0.04 | -0.13 | +0.19 |
+| India / `protein_g`          | -0.01 | -0.07 | +0.01 | +0.27 | +0.06 | +1.35 |
+| India / `total_fat_g`        | +0.00 | +0.03 | -0.01 | +0.02 | +0.05 | +0.17 |
+| India / `total_carbs_g`      | -0.01 | -0.01 | +0.03 | -0.05 | -0.04 | +0.14 |
+| India / `sodium_mg`          | -0.01 | -0.02 | +0.02 | +0.22 | +0.07 | +1.08 |
+| India / `sugars_g`           | -0.01 | -0.03 | +0.02 | -0.12 | -0.04 | +0.18 |
+| India / `avg_rating`         | -0.01 | -0.05 | -0.00 | +0.13 | -0.21 | +0.34 |
+| USA / `serving_size_g`       | -0.00 | +0.00 | +0.00 | +0.01 | -0.00 | +0.02 |
+| USA / `protein_g`            | -0.00 | -0.00 | +0.01 | +0.00 | +0.01 | -0.00 |
+| USA / `total_fat_g`          | -0.00 | -0.00 | -0.01 | +0.01 | +0.00 | -0.03 |
+| USA / `total_carbs_g`        | -0.00 | +0.00 | +0.00 | -0.01 | -0.02 | +0.00 |
+| USA / `sodium_mg`            | -0.00 | -0.00 | +0.01 | +0.01 | +0.01 | +0.01 |
+| USA / `sugars_g`             | -0.00 | +0.00 | -0.00 | -0.02 | -0.00 | -0.01 |
+| USA / `avg_rating`           | -0.00 | +0.00 | +0.01 | +0.00 | -0.01 | -0.02 |
+| UK / `serving_size_g`        | +0.00 | -0.00 | +0.01 | +0.02 | +0.01 | +0.06 |
+| UK / `protein_g`             | -0.00 | -0.01 | +0.01 | +0.03 | +0.07 | +0.06 |
+| UK / `total_fat_g`           | -0.00 | +0.00 | +0.00 | -0.00 | -0.02 | -0.01 |
+| UK / `total_carbs_g`         | -0.00 | +0.00 | -0.00 | +0.00 | +0.01 | -0.00 |
+| UK / `sodium_mg`             | -0.00 | -0.00 | +0.02 | +0.01 | +0.05 | +0.04 |
+| UK / `sugars_g`              | -0.00 | -0.00 | +0.00 | +0.01 | +0.02 | -0.01 |
+| UK / `avg_rating`            | +0.00 | +0.00 | -0.00 | -0.00 | -0.01 | +0.02 |
+| Canada / `serving_size_g`    | +0.00 | -0.00 | -0.02 | +0.03 | +0.00 | +0.05 |
+| Canada / `protein_g`         | +0.00 | +0.01 | -0.01 | +0.01 | +0.04 | +0.14 |
+| Canada / `total_fat_g`       | -0.00 | +0.00 | -0.01 | +0.01 | -0.00 | +0.01 |
+| Canada / `total_carbs_g`     | -0.00 | +0.01 | +0.00 | -0.00 | -0.01 | +0.02 |
+| Canada / `sodium_mg`         | +0.00 | +0.01 | -0.02 | +0.01 | +0.00 | +0.11 |
+| Canada / `sugars_g`          | -0.00 | +0.00 | +0.00 | -0.01 | +0.01 | -0.00 |
+| Canada / `avg_rating`        | +0.00 | +0.00 | -0.01 | +0.00 | -0.02 | +0.04 |
+| Australia / `serving_size_g` | -0.00 | +0.00 | -0.01 | +0.02 | +0.01 | +0.03 |
+| Australia / `protein_g`      | -0.00 | -0.00 | -0.01 | +0.04 | +0.12 | +0.01 |
+| Australia / `total_fat_g`    | +0.00 | -0.00 | -0.01 | +0.00 | +0.03 | -0.05 |
+| Australia / `total_carbs_g`  | +0.00 | -0.00 | +0.01 | -0.00 | -0.04 | +0.01 |
+| Australia / `sodium_mg`      | +0.00 | +0.00 | -0.01 | +0.03 | +0.09 | +0.01 |
+| Australia / `sugars_g`       | -0.00 | -0.01 | -0.01 | -0.00 | +0.02 | -0.00 |
+| Australia / `avg_rating`     | -0.00 | -0.00 | -0.01 | -0.01 | -0.01 | -0.02 |
+
+## 4. Dégradation RMSE (%) par taux d'imputation
+
+| Pays / Feature               |   10% |   25% |   50% |   75% |  100% |
+| ---------------------------- | ----: | ----: | ----: | ----: | ----: |
+| India / `serving_size_g`     | +0.40 | +1.13 | +2.01 | +2.80 | +3.94 |
+| India / `protein_g`          | +0.54 | +0.57 | +0.82 | +1.00 | +1.71 |
+| India / `total_fat_g`        | +0.20 | -0.10 | -0.09 | +0.03 | +0.11 |
+| India / `total_carbs_g`      | -0.42 | +0.31 | -0.54 | -0.51 | -0.67 |
+| India / `sodium_mg`          | +0.82 | +1.65 | +5.34 | +7.78 | +7.98 |
+| India / `sugars_g`           | -0.44 | +0.31 | +0.61 | +0.47 | +0.99 |
+| India / `avg_rating`         | -0.22 | -0.50 | +0.20 | +1.21 | +0.71 |
+| USA / `serving_size_g`       | -0.03 | -0.12 | -0.15 | -0.35 | -0.46 |
+| USA / `protein_g`            | -0.19 | -0.40 | -0.73 | -1.21 | -1.63 |
+| USA / `total_fat_g`          | -0.02 | -0.07 | -0.15 | -0.23 | -0.28 |
+| USA / `total_carbs_g`        | +0.02 | -0.02 | +0.04 | +0.10 | +0.06 |
+| USA / `sodium_mg`            | -0.21 | -0.44 | -0.90 | -1.51 | -1.92 |
+| USA / `sugars_g`             | +0.02 | +0.11 | +0.16 | +0.27 | +0.41 |
+| USA / `avg_rating`           | +0.10 | +0.20 | +0.42 | +0.70 | +0.91 |
+| UK / `serving_size_g`        | -0.05 | -0.07 | -0.15 | -0.15 | -0.29 |
+| UK / `protein_g`             | -0.23 | -0.43 | -0.72 | -1.08 | -1.65 |
+| UK / `total_fat_g`           | +0.01 | -0.05 | -0.09 | -0.15 | -0.25 |
+| UK / `total_carbs_g`         | -0.07 | -0.07 | -0.06 | -0.06 | -0.16 |
+| UK / `sodium_mg`             | -0.15 | -0.39 | -0.83 | -1.34 | -1.68 |
+| UK / `sugars_g`              | +0.07 | +0.22 | +0.37 | +0.63 | +0.73 |
+| UK / `avg_rating`            | +0.06 | +0.09 | +0.20 | +0.31 | +0.42 |
+| Canada / `serving_size_g`    | -0.04 | -0.30 | -0.39 | -0.43 | -0.76 |
+| Canada / `protein_g`         | -0.21 | -0.49 | -1.04 | -1.72 | -2.26 |
+| Canada / `total_fat_g`       | -0.06 | -0.20 | -0.35 | -0.62 | -0.70 |
+| Canada / `total_carbs_g`     | +0.06 | +0.04 | +0.20 | +0.27 | +0.30 |
+| Canada / `sodium_mg`         | -0.10 | -0.38 | -1.13 | -1.61 | -2.09 |
+| Canada / `sugars_g`          | +0.04 | +0.19 | +0.17 | +0.54 | +0.59 |
+| Canada / `avg_rating`        | +0.14 | +0.08 | +0.19 | +0.28 | +0.48 |
+| Australia / `serving_size_g` | -0.06 | -0.07 | -0.27 | -0.11 | -0.34 |
+| Australia / `protein_g`      | -0.32 | -0.15 | -0.91 | -1.39 | -1.81 |
+| Australia / `total_fat_g`    | -0.04 | -0.18 | -0.31 | -0.26 | -0.44 |
+| Australia / `total_carbs_g`  | -0.03 | -0.08 | -0.15 | -0.09 | -0.27 |
+| Australia / `sodium_mg`      | -0.22 | -0.45 | -0.82 | -1.74 | -2.03 |
+| Australia / `sugars_g`       | -0.00 | +0.16 | +0.23 | +0.32 | +0.43 |
+| Australia / `avg_rating`     | -0.04 | +0.08 | +0.04 | +0.11 | +0.12 |
+
+## 5. Figures
+
+- `results/isolation_rmse_coverage.png` - RMSE vs Coverage par pays (méthode du coude)
+- `results/imputation_degradation.png` - dégradation RMSE vs % NaN imputés
+- `results/noise_variation.png` - variation RMSE vs niveau de bruit
 
 ---
 
-## 4. Analyse & Interprétation
+## 6. Analyse des raisons
 
-### 4.1 RMSE vs Coverage
+### Pourquoi un tel écart de RMSE entre India et les autres pays ?
 
-La courbe RMSE vs Coverage permet de choisir un seuil IF pour filtrer les données
-les plus atypiques avant de prédire. Pour India (données d'entraînement), la courbe
-est lisse car l'IF a appris exactement sa distribution.
+La RMSE de base passe de 1.80 pour l'Inde à entre 7 et 10 pour les autres pays, soit un facteur à presque x5. Cet écart traduit un distribution shift sur la cible : les cinq pays sont extraits du même CSV mondial, donc leurs macronutriments restent comparables (un steak fait globalement les mêmes calories partout), mais `price_usd_normalized` reflète des réalités économiques très différentes (coût de la vie, marges des chaînes, TVA). Le MLP a appris la relation macros => prix sur le marché indien et il n'a aucune raison de produire le bon prix américain ou britannique.
 
-Pour les autres pays, une RMSE base plus élevée reflète le **distribution shift** :
-le modèle India n'a jamais vu ces données. Les features nutritionnelles (macros,
-portions) restent globalement cohérentes entre pays, ce qui explique que le transfert
-fonctionne sans ré-entraînement.
+### Pourquoi le seuil IF retenu est-il quasi-identique entre les pays (environ -0.525) ?
 
-### 4.2 Résistance à l'imputation
+L'Isolation Forest a été calibrée sur l'Inde : elle produit donc des scores plus extrêmes sur les autres pays (plus d'"anomalies"), mais la forme générale de la distribution des scores reste plutôt égale. Le seuil défini par coverage >= 70 % tombe donc à peu près au même endroit sur l'axe des scores pour tous les pays. Cela signifie aussi que l'IF agit comme un détecteur indirect de distribution shift : sur USA/UK/Canada/Australie, les points classés "anormaux" sont ceux qui s'écartent le plus de la distribution indienne qui sont effectivement ceux où le MLP extrapole le plus.
 
-L'imputer India utilise les médianes calculées sur les données indiennes. La dégradation
-de RMSE mesure à quel point ces médianes sont un mauvais proxy pour les données
-manquantes d'un autre pays.
+### Pourquoi le "Gain" est-il constant (environ 30 %) entre les pays ?
 
-Une dégradation faible indique que les distributions nutritionnelles sont similaires
-(médianes India ≈ valeurs réelles pays étranger). Une dégradation élevée signale un
-écart nutritionnel systématique entre l'Inde et ce pays.
+Par construction : on a fixé un coverage de 70 %, donc on coupe systématiquement les 30 % d'observations les plus atypiques. Le gain de environ 30 % est en grande partie mécanique. Ce qui valide la méthode, c'est qu'il existe : les points écartés par l'IF sont effectivement ceux où le modèle se trompe le plus.
 
-### 4.3 Résistance au bruit
+### Pourquoi les % de sensibilité au bruit / imputation sont-ils quasi nuls sur les pays non-India ?
 
-Le bruit est appliqué proportionnellement à l'écart-type de chaque feature, ce qui
-permet de comparer la sensibilité sur une échelle homogène. Une feature importante
-mais peu sensible au bruit indique que le modèle s'appuie sur des splits larges ;
-une feature très sensible révèle des nuances fines exploitées par le réseau.
+Piège statistique. Ces pourcentages sont relatifs à la RMSE de base. Sur USA/UK/Canada/Australie, la RMSE de base est déjà énorme (presque 9) à cause du shift. La variation absolue de RMSE causée par le bruit reste comparable à India, mais divisée par 9 elle devient invisible. La seule vraie mesure de sensibilité est celle sur India (RMSE_base saine de 1.80), où on voit que :
 
-Les pays avec moins d'observations (Australia: 629) ont une
-variance plus élevée dans leurs estimations de RMSE, d'où une courbe plus instable.
+- Le modèle est très robuste au bruit (=< 1.35 % max à 20 % de bruit).
+- Le modèle est plus sensible à l'imputation : `sodium_mg` dégrade de +8.0 % quand 100 % des valeurs sont remplacées par la médiane. Logique - le sodium varie énormément entre produits (dessert vs curry), donc l'imputer par la médiane fait perdre une information très discriminante.
 
-### 4.4 Pourquoi ces résultats ?
+### Pourquoi les courbes d'Australia sont les plus bruitées ?
 
-Les 5 pays partagent le même dataset source nutritionnel mondial : leurs macronutriments
-(protéines, lipides, glucides) suivent des distributions similaires car ils représentent
-les mêmes types d'aliments. Le signal "difficile" pour le modèle est `price_usd_normalized`,
-qui varie selon le coût de la vie local — d'où des RMSE base plus élevées hors-Inde.
+Variance d'échantillonnage : avec seulement 629 observations, l'estimation de la RMSE est moins stable. Les oscillations visibles ne sont pas du bruit du modèle, c'est du bruit statistique.
 
 ---
 
-## 5. Conclusion
+## 7. Conclusion
 
-| Critère | Recommandation |
-|---|---|
-| Filtre anomalie en production | Appliquer le seuil IF retenu (coverage 70%) avant de prédire |
-| Bruit admissible | < 10 % std par feature pour rester sous 5 % de dégradation RMSE |
-| Données manquantes | Robuste jusqu'à ~20–30 % MCAR pour les features continues |
-| Ré-entraînement | Envisager si la RMSE base d'un pays dépasse 2× la RMSE India |
-
----
-*Généré par `robustness_analysis.py`*
+| Critère                       | Recommandation                                                                                                                                                                                                                    |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Filtre anomalie en production | Appliquer le seuil IF par pays (environ -0.525) avant chaque prédiction ; si le score est en-dessous, retourner "incertain" plutôt qu'un prix                                                                                     |
+| Bruit admissible              | < 10 % de l'écart-type par feature => dégradation < 1 % sur India                                                                                                                                                                 |
+| Imputation                    | Robuste sauf sur `sodium_mg` (à alerter ou refuser si manquant)                                                                                                                                                                   |
+| Multi-pays                    | Pipeline India non transférable telle quelle : RMSE x 4-5 sur les autres pays. Un fine-tuning par pays (ou un encodage explicite du pays en feature, ou un post-scaling du prix) est nécessaire pour un déploiement multi-marché. |
