@@ -146,18 +146,18 @@ L'Isolation Forest a été calibrée sur l'Inde : elle produit donc des scores p
 
 ### Pourquoi le "Gain" est-il constant (environ 30 %) entre les pays ?
 
-Par construction : on a fixé un coverage de 70 %, donc on coupe systématiquement les 30 % d'observations les plus atypiques. Le gain de environ 30 % est en grande partie mécanique. Ce qui valide la méthode, c'est qu'il existe : les points écartés par l'IF sont effectivement ceux où le modèle se trompe le plus.
+On a fixé un coverage de 70 %, donc on coupe systématiquement les 30 % d'observations les plus atypiques. Le gain de environ 30 % est en grande partie mécanique.
 
 ### Pourquoi les % de sensibilité au bruit / imputation sont-ils quasi nuls sur les pays non-India ?
 
-Piège statistique. Ces pourcentages sont relatifs à la RMSE de base. Sur USA/UK/Canada/Australie, la RMSE de base est déjà énorme (presque 9) à cause du shift. La variation absolue de RMSE causée par le bruit reste comparable à India, mais divisée par 9 elle devient invisible. La seule vraie mesure de sensibilité est celle sur India (RMSE_base saine de 1.80), où on voit que :
+Ces pourcentages sont relatifs à la RMSE de base. Sur USA/UK/Canada/Australie, la RMSE de base est déjà énorme à cause du shift. La variation absolue de RMSE causée par le bruit reste comparable à India, mais divisée par 9 elle devient invisible. La seule vraie mesure de sensibilité est celle sur India (RMSE_base saine de 1.80), où on voit que :
 
 - Le modèle est très robuste au bruit (=< 1.35 % max à 20 % de bruit).
-- Le modèle est plus sensible à l'imputation : `sodium_mg` dégrade de +8.0 % quand 100 % des valeurs sont remplacées par la médiane. Logique - le sodium varie énormément entre produits (dessert vs curry), donc l'imputer par la médiane fait perdre une information très discriminante.
+- Le modèle est plus sensible à l'imputation : `sodium_mg` dégrade de +8.0 % quand 100 % des valeurs sont remplacées par la médiane.
 
 ### Pourquoi les courbes d'Australia sont les plus bruitées ?
 
-Variance d'échantillonnage : avec seulement 629 observations, l'estimation de la RMSE est moins stable. Les oscillations visibles ne sont pas du bruit du modèle, c'est du bruit statistique.
+Avec seulement 629 observations, l'estimation de la RMSE est moins stable.
 
 ---
 
