@@ -1,239 +1,161 @@
 import os
-os.environ["KERAS_BACKEND"]      = "tensorflow"
+os.environ["KERAS_BACKEND"] = "tensorflow"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-
-import warnings
-warnings.filterwarnings("ignore")
 
 import numpy as np
 import pandas as pd
 import joblib
 import keras
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 
-SEED = 42
-np.random.seed(SEED)
+model      = keras.models.load_model('model_india.keras')
+imputer    = joblib.load('imputer_india.pkl')
+scaler     = joblib.load('scaler_india.pkl')
+iso_forest = joblib.load('isolation_forest_india.pkl')
 
-BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR    = os.path.join(BASE_DIR, "data")
-RESULTS_DIR = os.path.join(BASE_DIR, "results")
-os.makedirs(RESULTS_DIR, exist_ok=True)
+os.makedirs('results', exist_ok=True)
 
-CONTINUOUS_COLS = ["serving_size_g", "protein_g", "total_fat_g",
-                   "total_carbs_g", "sodium_mg", "sugars_g", "avg_rating"]
-NOISE_LEVELS    = np.array([1, 3, 5, 10, 15, 20])
-N_REPEATS       = 3                   # 3 tirages suffisent pour stabiliser
-COUNTRIES       = ["USA", "UK", "Canada", "Australia"]
-COVERAGE_TARGET = 70
-IMPUTATION_BUCKETS = 20               # ~20 points sur l'axe x au lieu de 100
+CONTINUOUS   = ['serving_size_g', 'protein_g', 'total_fat_g',
+                'total_carbs_g', 'sodium_mg', 'sugars_g', 'avg_rating']
+NOISE_LEVELS = [1, 3, 5, 10, 15, 20]
 
 
-def fast_predict(X):
-    """Inference rapide"""
-    import tensorflow as tf
-    return model(tf.convert_to_tensor(X, dtype=tf.float32),
-                 training=False).numpy().flatten()
+def predict(X_scaled):
+    return model.predict(X_scaled, verbose=0).flatten()
 
-imputer    = joblib.load(os.path.join(BASE_DIR, "imputer_india.pkl"))
-scaler     = joblib.load(os.path.join(BASE_DIR, "scaler_india.pkl"))
-iso_forest = joblib.load(os.path.join(BASE_DIR, "isolation_forest_india.pkl"))
-model      = keras.models.load_model(os.path.join(BASE_DIR, "model_india.keras"))
-print("  imputer, scaler, iso_forest, model_india.keras OK")
+def rmse(y_true, y_pred):
+    return float(np.sqrt(mean_squared_error(y_true, y_pred)))
 
-# On reproduit le meme split que train_india.py
-data_india = pd.read_csv(os.path.join(DATA_DIR, "data_india.csv"))
-X_india    = data_india.drop(columns=["price_usd_normalized", "calories"])
-y_india    = data_india["price_usd_normalized"].values
-X_train_i, X_test_i, y_train_i, y_test_i = train_test_split(
-    X_india, y_india, test_size=0.2, random_state=SEED
-)
+data_india = pd.read_csv('data/data_india.csv')
+X_india    = data_india.drop(columns=['price_usd_normalized', 'calories'])
+y_india    = data_india['price_usd_normalized'].values
+_, X_india_test, _, y_india_test = train_test_split(X_india, y_india, test_size=0.2, random_state=42)
 
-X_test_i_scaled = scaler.transform(imputer.transform(X_test_i))
-y_pred_i        = fast_predict(X_test_i_scaled)
-rmse_india      = float(np.sqrt(mean_squared_error(y_test_i, y_pred_i)))
-print(f"RMSE India (test) : {rmse_india:.4f}")
-
-def isolation_test(X_scaled, y_true, y_pred):
-    scores     = iso_forest.score_samples(X_scaled)
-    thresholds = np.linspace(scores.min(), scores.max(), 100)
-    coverages, rmses = [], []
-    n = len(y_true)
-    for t in thresholds:
-        mask = scores >= t
-        coverages.append(100 * mask.sum() / n)
-        if mask.sum() > 0:
-            rmses.append(np.sqrt(mean_squared_error(y_true[mask], y_pred[mask])))
-        else:
-            rmses.append(np.nan)
-
-    best_thr, best_rmse = None, np.inf
-    for t, cov, r in zip(thresholds, coverages, rmses):
-        if cov >= COVERAGE_TARGET and not np.isnan(r) and r < best_rmse:
-            best_rmse = r
-            best_thr  = t
-
-    return (np.asarray(thresholds), np.asarray(coverages),
-            np.asarray(rmses), best_thr, best_rmse)
-
-
-def imputation_test(X_raw, y_true, rmse_base, seed=SEED):
-    rng         = np.random.default_rng(seed)
-    n_total     = X_raw.shape[0]
-    range_scale = max(1, n_total // IMPUTATION_BUCKETS)
-    n_range     = list(range(range_scale, n_total, range_scale))
-    degradation = {f: [] for f in CONTINUOUS_COLS}
-
-    for feat in CONTINUOUS_COLS:
-        feat_idx = list(X_raw.columns).index(feat)
-        for n_missing in n_range:
-            runs = []
-            for _ in range(N_REPEATS):
-                X_c = X_raw.copy()
-                idx = rng.choice(n_total, n_missing, replace=False)
-                X_c.iloc[idx, feat_idx] = np.nan
-                X_imp = scaler.transform(imputer.transform(X_c))
-                y_imp = fast_predict(X_imp)
-                runs.append(np.sqrt(mean_squared_error(y_true, y_imp)))
-            degradation[feat].append(
-                (np.mean(runs) - rmse_base) / rmse_base * 100
-            )
-    return n_range, degradation
-
-
-def noise_test(X_raw, y_true, rmse_base, seed=SEED):
-    X_base    = imputer.transform(X_raw)
-    variation = {f: [] for f in CONTINUOUS_COLS}
-
-    for feat in CONTINUOUS_COLS:
-        feat_idx = list(X_raw.columns).index(feat)
-        std_dev  = X_base[:, feat_idx].std()
-        for lvl in NOISE_LEVELS:
-            rng  = np.random.default_rng(seed + int(lvl))
-            runs = []
-            for _ in range(N_REPEATS):
-                X_n = X_base.copy()
-                X_n[:, feat_idx] += rng.normal(0, std_dev * lvl / 100, len(X_n))
-                X_n_scaled = scaler.transform(X_n)
-                y_n = fast_predict(X_n_scaled)
-                runs.append(np.sqrt(mean_squared_error(y_true, y_n)))
-            variation[feat].append(100 * (np.mean(runs) - rmse_base) / rmse_base)
-    return variation
-
-print("\n--- India (test set, N=%d) ---" % len(y_test_i))
-thr_i, cov_i, rmse_i, best_thr_i, best_rmse_i = isolation_test(
-    X_test_i_scaled, y_test_i, y_pred_i
-)
-print(f"  Seuil IF retenu (cov >= {COVERAGE_TARGET}%) : "
-      f"{best_thr_i:.4f}  RMSE={best_rmse_i:.4f}")
-
-n_range_i, degradation_i = imputation_test(X_test_i, y_test_i, rmse_india)
-variation_i              = noise_test(X_test_i, y_test_i, rmse_india)
-
-results = {
-    "India": {
-        "n": len(y_test_i), "rmse_base": rmse_india,
-        "thr": thr_i, "cov": cov_i, "rmses": rmse_i,
-        "best_thr": best_thr_i, "best_rmse": best_rmse_i,
-        "n_range": n_range_i, "degradation": degradation_i,
-        "variation": variation_i,
-    }
+datasets = {
+    'India':     (X_india_test, y_india_test),
+    'USA':       (lambda d: (d.drop(columns=['price_usd_normalized','calories']), d['price_usd_normalized'].values))(pd.read_csv('data/data_usa.csv')),
+    'UK':        (lambda d: (d.drop(columns=['price_usd_normalized','calories']), d['price_usd_normalized'].values))(pd.read_csv('data/data_uk.csv')),
+    'Canada':    (lambda d: (d.drop(columns=['price_usd_normalized','calories']), d['price_usd_normalized'].values))(pd.read_csv('data/data_canada.csv')),
+    'Australia': (lambda d: (d.drop(columns=['price_usd_normalized','calories']), d['price_usd_normalized'].values))(pd.read_csv('data/data_australia.csv')),
 }
 
-for country in COUNTRIES:
-    print(f"\n--- {country} ---")
-    data_c = pd.read_csv(os.path.join(DATA_DIR, f"data_{country.lower()}.csv"))
-    X_c    = data_c.drop(columns=["price_usd_normalized", "calories"])
-    y_c    = data_c["price_usd_normalized"].values
+# Prédictions avec les artefacts India
+baseline = {}
+for name, (X_raw, y_true) in datasets.items():
+    X_scaled      = scaler.transform(imputer.transform(X_raw))
+    y_pred        = predict(X_scaled)
+    rmse_base     = rmse(y_true, y_pred)
+    baseline[name] = {'X_raw': X_raw, 'y': y_true,
+                      'X_scaled': X_scaled, 'y_pred': y_pred, 'rmse_base': rmse_base}
+    print(f"{name:10s}  N={len(y_true):5d}  RMSE={rmse_base:.4f}")
 
-    X_c_scaled = scaler.transform(imputer.transform(X_c))
-    y_pred_c   = fast_predict(X_c_scaled)
-    rmse_c     = float(np.sqrt(mean_squared_error(y_c, y_pred_c)))
-    print(f"  N={len(y_c)}  RMSE base = {rmse_c:.4f}")
 
-    thr_c, cov_c, rmse_cv, best_thr_c, best_rmse_c = isolation_test(
-        X_c_scaled, y_c, y_pred_c
-    )
-    print(f"  Seuil IF retenu (cov >= {COVERAGE_TARGET}%) : "
-          f"{best_thr_c:.4f}  RMSE={best_rmse_c:.4f}")
+# Scores d'anomalie : RMSE vs Coverage
+fig, axes = plt.subplots(1, len(baseline), figsize=(20, 4))
 
-    n_range_c, degradation_c = imputation_test(X_c, y_c, rmse_c)
-    variation_c              = noise_test(X_c, y_c, rmse_c)
+for ax, (name, r) in zip(axes, baseline.items()):
+    scores     = iso_forest.score_samples(r['X_scaled'])
+    thresholds = np.linspace(scores.min(), scores.max(), 100)
+    coverages, rmses = [], []
+    for t in thresholds:
+        mask = scores >= t
+        coverages.append(100 * mask.sum() / len(r['y']))
+        rmses.append(rmse(r['y'][mask], r['y_pred'][mask]) if mask.sum() > 0 else np.nan)
 
-    results[country] = {
-        "n": len(y_c), "rmse_base": rmse_c,
-        "thr": thr_c, "cov": cov_c, "rmses": rmse_cv,
-        "best_thr": best_thr_c, "best_rmse": best_rmse_c,
-        "n_range": n_range_c, "degradation": degradation_c,
-        "variation": variation_c,
-    }
-
-ALL_COUNTRIES = ["India"] + COUNTRIES
-
-# Figure RMSE vs Coverage
-fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-axes = axes.flatten()
-for i, country in enumerate(ALL_COUNTRIES):
-    r   = results[country]
-    ax1 = axes[i]
-    ax2 = ax1.twinx()
-    ax1.plot(r["thr"], r["rmses"], color="tab:blue", lw=2, label="RMSE")
-    ax2.plot(r["thr"], r["cov"],   color="tab:red", ls="--", lw=2, label="Coverage %")
-    if r["best_thr"] is not None:
-        ax1.axvline(r["best_thr"], color="green", lw=1.5, ls=":",
-                    label=f"Seuil retenu : {r['best_thr']:.3f}")
-    ax1.set_xlabel("Seuil de score d'isolement (plus eleve = plus strict)")
-    ax1.set_ylabel("RMSE", color="tab:blue")
-    ax1.tick_params(axis="y", labelcolor="tab:blue")
-    ax2.set_ylabel("Coverage (%)", color="tab:red")
-    ax2.tick_params(axis="y", labelcolor="tab:red")
-    ax2.axhline(COVERAGE_TARGET, color="gray", ls=":", lw=1)
-    ax1.set_title(f"{country}  (N={r['n']}, RMSE base={r['rmse_base']:.4f})")
-    ax1.grid(True, alpha=0.3)
-    h1, l1 = ax1.get_legend_handles_labels()
+    ax2 = ax.twinx()
+    ax.plot(thresholds, rmses, color='tab:blue', lw=2, label='RMSE')
+    ax2.plot(thresholds, coverages, color='tab:red', ls='--', lw=2, label='Coverage %')
+    ax.set_title(f'{name}  (RMSE={r["rmse_base"]:.3f})')
+    ax.set_xlabel("Score d'isolement")
+    ax.set_ylabel('RMSE', color='tab:blue')
+    ax2.set_ylabel('Coverage (%)', color='tab:red')
+    ax.grid(True, alpha=0.3)
+    h1, l1 = ax.get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
-    ax1.legend(h1 + h2, l1 + l2, fontsize=7, loc="upper right")
-axes[-1].set_visible(False)
-fig.suptitle("Analyse de robustesse : RMSE vs Coverage (Isolation Forest India)", fontsize=14)
-plt.tight_layout()
-fig.savefig(os.path.join(RESULTS_DIR, "isolation_rmse_coverage.png"), dpi=150)
-plt.close(fig)
-print("isolation_rmse_coverage.png")
+    ax.legend(h1 + h2, l1 + l2, fontsize=7)
 
-# Figure Impact imputation
-fig, axes = plt.subplots(1, len(ALL_COUNTRIES), figsize=(20, 5), sharey=True)
-for ax, country in zip(axes, ALL_COUNTRIES):
-    r = results[country]
-    x_pct = [100 * n / r["n"] for n in r["n_range"]]
-    for feat in CONTINUOUS_COLS:
-        ax.plot(x_pct, r["degradation"][feat], label=feat, lw=1.2)
-    ax.set_xlabel("% de valeurs manquantes")
-    ax.set_title(country)
-    ax.legend(fontsize=6, loc="upper left")
-    ax.grid(True, alpha=0.3)
-axes[0].set_ylabel("Degradation RMSE (%)")
-fig.suptitle("Impact de l'imputation par mediane India sur la degradation RMSE", fontsize=13)
+fig.suptitle("Scores d'anomalie : RMSE vs Coverage (IF entraîné sur India)")
 plt.tight_layout()
-fig.savefig(os.path.join(RESULTS_DIR, "imputation_degradation.png"), dpi=150)
+fig.savefig('results/anomaly_scores.png', dpi=150)
 plt.close(fig)
-print("imputation_degradation.png")
+print("-> results/anomaly_scores.png")
 
-# Figure Test de bruit
-fig, axes = plt.subplots(1, len(ALL_COUNTRIES), figsize=(20, 5), sharey=True)
-for ax, country in zip(axes, ALL_COUNTRIES):
-    r = results[country]
-    for feat in CONTINUOUS_COLS:
-        ax.plot(NOISE_LEVELS, r["variation"][feat], "o-", label=feat, lw=1.2)
-    ax.set_xlabel("Niveau de bruit (% de l'ecart-type)")
-    ax.set_title(country)
-    ax.legend(fontsize=6, loc="upper left")
+
+# Robustesse à l'imputation
+fig, axes = plt.subplots(1, len(baseline), figsize=(20, 4), sharey=True)
+rng = np.random.default_rng(42)
+
+for ax, (name, r) in zip(axes, baseline.items()):
+    X_raw  = r['X_raw']
+    y_true = r['y']
+    n      = X_raw.shape[0]
+    step   = max(1, n // 20)
+    n_range = list(range(step, n, step))
+    x_pct   = [100 * k / n for k in n_range]
+
+    for feat in CONTINUOUS:
+        if feat not in X_raw.columns:
+            continue
+        feat_idx     = list(X_raw.columns).index(feat)
+        degradations = []
+        for n_missing in n_range:
+            runs = []
+            for _ in range(3):
+                X_c = X_raw.copy()
+                idx = rng.choice(n, n_missing, replace=False)
+                X_c.iloc[idx, feat_idx] = np.nan
+                y_imp = predict(scaler.transform(imputer.transform(X_c)))
+                runs.append(rmse(y_true, y_imp))
+            degradations.append((np.mean(runs) - r['rmse_base']) / r['rmse_base'] * 100)
+        ax.plot(x_pct, degradations, label=feat, lw=1.2)
+
+    ax.set_title(name)
+    ax.set_xlabel('% valeurs manquantes')
+    ax.legend(fontsize=6)
     ax.grid(True, alpha=0.3)
-axes[0].set_ylabel("Variation RMSE (%)")
-fig.suptitle("Test de robustesse au bruit gaussien (variation RMSE)", fontsize=13)
+
+axes[0].set_ylabel('Dégradation RMSE (%)')
+fig.suptitle("Robustesse à l'imputation par médiane (India)")
 plt.tight_layout()
-fig.savefig(os.path.join(RESULTS_DIR, "noise_variation.png"), dpi=150)
+fig.savefig('results/imputation.png', dpi=150)
 plt.close(fig)
-print("noise_variation.png")
+print("-> results/imputation.png")
+
+
+# Robustesse au bruit 
+fig, axes = plt.subplots(1, len(baseline), figsize=(20, 4), sharey=True)
+
+for ax, (name, r) in zip(axes, baseline.items()):
+    X_imp  = imputer.transform(r['X_raw'])  # espace impute, avant scale
+    y_true = r['y']
+
+    for feat in CONTINUOUS:
+        if feat not in r['X_raw'].columns:
+            continue
+        feat_idx = list(r['X_raw'].columns).index(feat)
+        std_dev  = X_imp[:, feat_idx].std()
+        variations = []
+        for lvl in NOISE_LEVELS:
+            runs = []
+            for seed in range(3):
+                rng2 = np.random.default_rng(42 + seed + int(lvl * 100))
+                X_n = X_imp.copy()
+                X_n[:, feat_idx] += rng2.normal(0, std_dev * lvl / 100, len(X_n))
+                y_n = predict(scaler.transform(X_n))
+                runs.append(rmse(y_true, y_n))
+            variations.append(100 * (np.mean(runs) - r['rmse_base']) / r['rmse_base'])
+        ax.plot(NOISE_LEVELS, variations, 'o-', label=feat, lw=1.2)
+
+    ax.set_title(name)
+    ax.set_xlabel("Niveau de bruit (% écart-type)")
+    ax.legend(fontsize=6)
+    ax.grid(True, alpha=0.3)
+
+axes[0].set_ylabel('Variation RMSE (%)')
+fig.suptitle("Robustesse au bruit gaussien (IF et artefacts India)")
+plt.tight_layout()
+fig.savefig('results/noise.png', dpi=150)
+plt.close(fig)
+print("-> results/noise.png")
